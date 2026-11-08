@@ -75,6 +75,30 @@ main{display:block!important;position:static!important;margin:0!important;paddin
 .dish{padding:2mm 0!important}
 #pfooter{margin:3mm 0!important}
 .menu-bottomline{margin-top:2mm!important}
+}/* iOS AirPrint: natural document flow, never force an A4-tall element */
+@page{size:A4 portrait;margin:10mm}
+@media print{
+html,body{display:block!important;position:static!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important}
+body{background:white!important}
+header,.panel{display:none!important}
+main{display:block!important;position:static!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important}
+.paper{display:block!important;position:static!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:6mm 8mm!important;box-sizing:border-box!important;border:1px solid #888!important;background:white!important;box-shadow:none!important;break-after:auto!important;page-break-after:auto!important;break-inside:auto!important;page-break-inside:auto!important}
+.paper:before,.paper:after{display:none!important}
+.paper,.paper *{color:#000!important;background:transparent!important}
+.food-art{height:15mm!important;margin:0 auto 1mm!important}
+.food-art svg{height:14mm!important;width:55mm!important}
+.paper h1{font-size:23pt!important;margin:1mm 0!important}
+.paper h2{font-size:12pt!important;margin:1mm 0!important}
+#pdate{font-size:9pt!important;padding:0 0 2mm!important}
+.menu-section{margin:1mm 0 2mm!important;padding-top:2mm!important}
+.paper .menu-section h3{margin:0 0 1.5mm!important;font-size:8pt!important}
+#psoup{font-size:11pt!important}
+.dish{padding:2mm 0!important}
+.dish strong{font-size:10pt!important}
+.dish small{font-size:8pt!important}
+.dish .price{font-size:10pt!important}
+#pfooter{margin:2mm 0 1mm!important}
+.menu-bottomline{margin:1mm 0 0!important}
 }</style></head><body><header><strong>REŠTAURÁCIA U MASTINA</strong> · Editor obedového menu</header><main><section class="panel"><label>Dátum<input id="date" type="date"></label><label>Polievka<input id="soup" list="soupsList" placeholder="Kurací vývar"></label><datalist id="soupsList"></datalist><label>Vybrať polievku z databázy<select id="soupSelect"><option value="">Vyber uloženú polievku</option></select></label><label>Spoločná cena menu (€)<input id="price" type="number" min="0" step=".01" value="7"></label><label>Text v pätičke<input id="footer" value="Objednávky cez Bolt Food"></label><h3>Hlavné jedlá <span class="muted">· Príloha 1 a príloha 2</span></h3><datalist id="sidesList"></datalist><div id="meals"></div><h3>Databáza jedál, polievok a príloh</h3><p>Pri uložení dňa sa názvy jedál, prílohy aj polievka automaticky pridajú do databázy v tomto prehliadači.</p><button id="export" type="button">Exportovať databázu a menu</button><label>Importovať zálohu<input id="import" type="file" accept=".json,application/json"></label><button id="add" type="button">+ Pridať jedlo</button><button id="save" type="button">Uložiť deň</button><button id="print" type="button">Tlačiť / PDF</button><button id="showPreview" type="button">Zobraziť náhľad ↓</button><label>Načítať uložený deň<select id="saved" style="width:100%;padding:10px"></select></label><p id="notice"></p></section><section class="paper" id="preview" aria-label="Živý náhľad jedálneho lístka"><div class="menu-topline">REŠTAURÁCIA & PIZZERIA · SENICA</div><h1>U MASTINA</h1><div class="food-art" aria-hidden="true"><svg viewBox="0 0 240 72" width="210" height="63" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="120" cy="37" rx="46" ry="29"/><ellipse cx="120" cy="37" rx="34" ry="20"/><path d="M108 38c8-14 18-12 25-2-10 11-19 13-25 2z"/><path d="M100 30q-12-11-15-20m15 20q-18-1-24-9m64 8q15-14 20-18m-20 18q18-4 23-14"/><path d="M42 12v45m-9-45v17q9 8 18 0V12m-9 17v28M195 13q-18 18-7 28h7v16"/></g><path d="M115 31q5-12 12-11" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></div><h2>OBEDOVÉ MENU</h2><div id="pdate"></div><div class="menu-section"><h3>POLIEVKA</h3><div id="psoup">—</div></div><div class="menu-section"><h3>HLAVNÉ JEDLÁ</h3><div id="pdishes"></div></div><p id="pfooter"></p><div class="menu-bottomline">DOBRÚ CHUŤ</div></section></main><script>
 const $=id=>document.getElementById(id),key='mastina_menu_v1_',dbkey='mastina_database_v2';
 let meals=[],db={soups:[],dishes:[],sides:[]};
