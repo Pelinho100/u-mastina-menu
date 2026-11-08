@@ -142,8 +142,9 @@ let meals=[],db={soups:[],dishes:[],sides:[]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').trim().toLocaleLowerCase('sk');
 function readDB(){try{let v=JSON.parse(localStorage.getItem(dbkey)||'{}');db={soups:Array.isArray(v.soups)?v.soups:[],dishes:Array.isArray(v.dishes)?v.dishes:[],sides:Array.isArray(v.sides)?v.sides:[]}}catch(e){db={soups:[],dishes:[],sides:[]}}}
-function saveDB(){localStorage.setItem(dbkey,JSON.stringify(db));refreshDB()}
-function refreshDB(){
+function normalizeDishCategories(){const sideNames=new Set(db.sides.map(norm));for(const d of db.dishes){for(const s of [d.side1,d.side2,d.side3])if(String(s||'').trim())sideNames.add(norm(s));}const sideOnly=new Set(['hranolky','ryža','ryza','zemiaková kaša','zemiakova kasa','knedľa','knedla','šalát','salat','tatárska omáčka','tatarska omacka','kompót','kompot','uhorkový šalát','uhorkovy salat','zemiaky','syr']);const keep=[];for(const d of db.dishes){if(!d||typeof d.name!=='string'||!d.name.trim())continue;const n=norm(d.name);if((sideNames.has(n)||sideOnly.has(n))&&!d.side1&&!d.side2&&!d.side3){if(!db.sides.some(s=>norm(s)===n))db.sides.push(d.name.trim());}else if(!keep.some(x=>norm(x.name)===n))keep.push(d);}db.dishes=keep;}
+function saveDB(){normalizeDishCategories();localStorage.setItem(dbkey,JSON.stringify(db));refreshDB()}
+function refreshDB(){normalizeDishCategories();
 const sl=$('sidesList');sl.innerHTML='';db.sides.forEach(v=>{const o=document.createElement('option');o.value=v;sl.appendChild(o)});
 const l=$('soupsList');l.innerHTML='';db.soups.forEach(v=>{const o=document.createElement('option');o.value=v;l.appendChild(o)});
 document.querySelectorAll('.picker-panel:not([hidden])').forEach(panel=>renderPicker(panel.closest('.picker')));if(typeof renderLibrary==='function'&&$('libraryItems'))renderLibrary();const count=$('dbCount');if(count)count.textContent='Uložené: '+db.dishes.length+' jedál, '+db.soups.length+' polievok, '+db.sides.length+' príloh.';
@@ -163,6 +164,7 @@ const results=picker.querySelector('.picker-results');results.replaceChildren();
 if(!items.length){const empty=document.createElement('p');empty.className='picker-empty';empty.textContent='Žiadna zhoda v databáze';results.appendChild(empty);return}
 items.forEach(({v,i})=>{const btn=document.createElement('button');btn.type='button';btn.className='picker-result';btn.textContent=typeof v==='string'?v:v.name;btn.onclick=()=>{picker._select(v,i);picker.querySelector('.picker-panel').hidden=true};results.appendChild(btn)});
 }
+// Keep old incorrectly classified side dishes out of the saved-meal picker.
 function remember(){getSoups().forEach(s=>{s=s.trim();if(s&&!db.soups.some(v=>norm(v)===norm(s)))db.soups.push(s)});meals.forEach(m=>{[m.side1,m.side2,m.side3].forEach(v=>{v=String(v||'').trim();if(v&&!db.sides.some(s=>norm(s)===norm(v)))db.sides.push(v)});if(!m.name.trim())return;const item={name:m.name.trim(),side1:m.side1||'',side2:m.side2||'',side3:m.side3||'',price:m.price||''};let i=db.dishes.findIndex(d=>norm(d.name)===norm(item.name));if(i>=0)db.dishes[i]=item;else db.dishes.push(item)});saveDB()}
 function addMeal(m={}){meals.push({name:m.name||'',side1:m.side1??m.side??'',side2:m.side2||'',side3:m.side3||'',price:m.price||''});expandedMeal=meals.length-1;renderEditor();preview()}
 let expandedMeal=0;
