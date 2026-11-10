@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="sk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>U Mastina – Kuchyňa</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eceae5;color:#171717;font:16px system-ui,Arial,sans-serif}
+.toolbar{background:#183f35;color:white;padding:16px 22px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.toolbar h1{font-size:21px;margin:0 auto 0 0}.toolbar a{color:white}
+.controls{max-width:950px;margin:20px auto;padding:16px;background:white;border-radius:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.controls label{display:grid;gap:5px;font-weight:650}.controls input,.controls select{padding:10px;border:1px solid #aaa;border-radius:6px;font:inherit}
+button{background:#183f35;color:white;border:0;border-radius:7px;padding:12px 18px;font:700 15px system-ui;cursor:pointer}
+#status{width:100%;font-size:14px;color:#555}
+.sheet{background:white;width:min(100% - 24px,210mm);min-height:297mm;margin:20px auto;padding:15mm 15mm 12mm;box-shadow:0 3px 20px #0002}
+.sheet h2{font-size:30px;text-align:center;margin:0 0 8px}.date{text-align:center;font-size:20px;font-weight:700;border-bottom:3px solid black;padding-bottom:12px}
+.meal{border-bottom:2px solid #aaa;padding:16px 0;break-inside:avoid}
+.meal h3{font-size:25px;line-height:1.22;margin:0 0 10px}
+.sides{font-size:20px;line-height:1.4}.sides b{font-weight:800}
+.empty{font-size:18px;color:#666;text-align:center;padding:25px}
+@page{size:A4 portrait;margin:0}
+@media print{html,body{background:white;margin:0}.toolbar,.controls{display:none!important}.sheet{margin:0;width:210mm;min-height:0;padding:14mm 15mm;box-shadow:none}.meal{padding:12px 0}.meal h3{font-size:23px}.sides{font-size:19px}}
+</style></head><body>
+<header class="toolbar"><h1>U MASTINA · KUCHYŇA</h1><a href="./">← Späť do editora</a></header>
+<div class="controls"><label>Deň menu <input id="date" type="date"></label><label>Uložené dni <select id="days"></select></label><button id="print">Tlačiť kuchyňu / PDF</button><div id="status"></div></div>
+<main class="sheet"><h2>KUCHYŇA – OBEDOVÉ MENU</h2><div class="date" id="heading"></div><div id="meals"></div></main>
+<script>
+const key='mastina_menu_v1_',date=document.getElementById('date'),days=document.getElementById('days'),out=document.getElementById('meals'),status=document.getElementById('status');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const available=()=>Object.keys(localStorage).filter(k=>k.startsWith(key)&&/^\d{4}-\d{2}-\d{2}$/.test(k.slice(key.length))).map(k=>k.slice(key.length)).sort().reverse();
+function render(){
+ const d=date.value;days.value=d;document.getElementById('heading').textContent=d?new Date(d+'T12:00:00').toLocaleDateString('sk-SK',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+ let data=null;try{data=JSON.parse(localStorage.getItem(key+d)||'null')}catch(e){}
+ if(!data){out.innerHTML='<div class="empty">Pre tento deň nie je uložené menu. Najprv ho ulož v editore.</div>';status.textContent='Žiadne uložené menu pre zvolený deň.';return}
+ const meals=Array.isArray(data.meals)?data.meals:[];out.innerHTML=meals.map((m,i)=>{
+ const sides=[m.side1??m.side,m.side2,m.side3].filter(x=>String(x||'').trim());
+ return '<article class="meal"><h3>'+(i+1)+'. '+esc(m.name||'—')+'</h3><div class="sides"><b>Príloha'+(sides.length>1?'y':'')+':</b> '+(sides.length?sides.map(esc).join(' · '):'—')+'</div></article>'
+ }).join('')||'<div class="empty">V tomto menu nie sú jedlá.</div>';
+ status.textContent='Načítané uložené menu: '+d+'. Zobrazené sú iba jedlá a prílohy.';
+}
+function refresh(){const list=available();days.innerHTML='<option value="">Vyber deň</option>'+list.map(d=>'<option value="'+d+'">'+d+'</option>').join('');if(!date.value||(!localStorage.getItem(key+date.value)&&list.length))date.value=list[0]||new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);render()}
+date.addEventListener('change',render);days.addEventListener('change',()=>{if(days.value){date.value=days.value;render()}});document.getElementById('print').onclick=()=>{if(!localStorage.getItem(key+date.value)){alert('Najprv vyber uložený deň.');return}window.print()};window.addEventListener('storage',refresh);refresh();
+</script></body></html>
