@@ -71,3 +71,5 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 .archive-drafts .archive-actions{border-top:1px solid var(--line);padding:6px 0 0}
 #draft-list>p{margin-top:5px}
 @media(max-width:650px){.sidebar nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+@media screen and (max-width:650px){#github-token{font-size:16px}#github-dialog .dialog-title h2{font-size:19px;min-width:0}#github-dialog .dialog-title button{flex:none}}

@@ -491,6 +491,18 @@ function renderKitchen() {
   $('kitchen-days').innerHTML = chosen ? chosen.days.map((day, i) => renderDay(day, i, chosen.start, true)).join('') : '';
 }
 
+async function githubAccessError(response, action) {
+  const body = await response.json().catch(() => ({}));
+  const message = typeof body?.message === 'string' ? body.message : '';
+  if (response.status === 429 || response.headers?.get('x-ratelimit-remaining') === '0' ||
+      response.headers?.get('retry-after') || /rate limit|abuse detection/i.test(message)) {
+    return 'GitHub dočasne obmedzil počet požiadaviek. Počkaj a skús znova s tým istým tokenom.';
+  }
+  if (/protected branch|repository rule|GH013|GH006/i.test(message)) {
+    return 'Pravidlá repozitára GitHub zablokovali zápis. Skontroluj pravidlá pre vetvy menu-data a menu-pairing.';
+  }
+  return 'GitHub odmietol ' + action + '. V nastaveniach tokenu vyber Pelinho100 → u-mastina-menu → Contents: Read and write a ulož zmeny.';
+}
 async function request(method = 'GET', auth = '', body) {
   const headers = { Accept: 'application/vnd.github+json' };
   if (auth) headers.Authorization = 'Bearer ' + auth;
@@ -499,13 +511,15 @@ async function request(method = 'GET', auth = '', body) {
     method, headers, cache: 'no-store', body: body && JSON.stringify(body)
   });
   if (!response.ok) {
-    const error = new Error({
+    const detail = [403, 429].includes(response.status)
+      ? await githubAccessError(response, method === 'PUT' ? 'zápis menu' : 'načítanie menu')
+      : {
       401: 'GitHub token je neplatný alebo vypršal.',
-      403: 'GitHub zamietol prístup. Skontroluj právo Contents: Read and write alebo to skús neskôr.',
       404: 'GitHub súbor sa nenašiel. Skontroluj prístup k repozitáru u-mastina-menu.',
       409: 'Databázu práve zmenilo iné zariadenie.',
       422: 'GitHub zamietol zápis databázy.'
-    }[response.status] || 'GitHub vrátil chybu ' + response.status + '.');
+    }[response.status];
+    const error = new Error(detail || 'GitHub vrátil chybu ' + response.status + '.');
     error.status = response.status;
     throw error;
   }
