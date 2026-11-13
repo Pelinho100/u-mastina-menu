@@ -300,7 +300,9 @@
     "dishes:vyprazany kuraci rezen": [],
     "sides:zemiakova kasa": [],
     "sides:uhorka": [],
-    "dishes:plnena placka s bravcovym masom": [],
+    "dishes:plnena placka s bravcovym masom": [
+      1
+    ],
     "sides:zeleninovy salat": [],
     "dishes:vyprazany bravcovy rezen": [
       1
