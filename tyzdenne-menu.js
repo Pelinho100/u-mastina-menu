@@ -108,6 +108,10 @@ function addHistory(data, items) {
 function applyOperation(data, op) {
   if (op.settings) data.settings = { ...data.settings, ...normalizeSettings(op.settings) };
   if (op.entries) addEntries(data.library, op.entries);
+  if (op.replacedHistoryIds) {
+    const replaced = new Set(op.replacedHistoryIds);
+    data.history = data.history.filter(item => !replaced.has(item.id));
+  }
   if (op.history) addHistory(data, op.history);
   if (op.edit) {
     const { category, before, after } = op.edit;
@@ -163,8 +167,10 @@ if (read(keys.draft + '-dirty', false)) {
   }
   localStorage.removeItem(keys.draft + '-dirty');
 }
-week = normalizeWeek(read(keys.drafts, {})[week.start] || week);
-let draftDirty = Boolean(read(keys.drafts, {})[week.start]);
+const initialDraft = read(keys.drafts, {})[week.start];
+week = normalizeWeek(initialDraft || week);
+let originalWeekStart = initialDraft?.originalWeekStart || week.start;
+let draftDirty = Boolean(initialDraft);
 let archiveStart = '';
 
 function writeState(value) {
@@ -193,7 +199,7 @@ function renderDraftStatus() {
   $('draft-status').classList.toggle('draft-active', draftDirty);
 }
 function markDraft() {
-  updateDrafts(drafts => { drafts[week.start] = week; });
+  updateDrafts(drafts => { drafts[week.start] = { ...week, originalWeekStart }; });
   localStorage.setItem(keys.draft, JSON.stringify(week));
   if (!draftDirty) {
     draftDirty = true;
@@ -203,6 +209,7 @@ function markDraft() {
 }
 function setWeek(next, isDraft = false) {
   week = normalizeWeek(next);
+  originalWeekStart = next.originalWeekStart || week.start;
   draftDirty = isDraft;
   localStorage.setItem(keys.draft, JSON.stringify(week));
   renderEditor();
@@ -215,6 +222,33 @@ function openWeek(start) {
   dayIndex = 0;
   setWeek(draft || saved?.data || emptyWeek(start), Boolean(draft));
   openView('editor');
+}
+function changeWeekDate(value) {
+  const start = value ? monday(value) : week.start;
+  if (start === week.start) {
+    $('start').value = week.start;
+    return;
+  }
+  const drafts = read(keys.drafts, {});
+  const saved = cache.history.some(item => item.data.start === week.start);
+  if (!draftDirty && !saved) {
+    openWeek(start);
+    return;
+  }
+  const occupied = cache.history.some(item => item.data.start === start);
+  if (drafts[start] || (occupied && start !== originalWeekStart)) {
+    $('start').value = week.start;
+    notify('Pre týždeň ' + range(start) + ' už existuje menu. Otvor ho cez Uložené týždne alebo vyber iný dátum.', true);
+    return;
+  }
+  const previousStart = week.start;
+  week.start = start;
+  updateDrafts(items => {
+    delete items[previousStart];
+    items[start] = { ...week, originalWeekStart };
+  });
+  setWeek({ ...week, originalWeekStart }, true);
+  notify('Dátum je upravený. Klikni na Uložiť týždeň, aby sa zmena prejavila v archíve.');
 }
 function notify(message, error = false) {
   $('notice').hidden = false;
@@ -265,6 +299,16 @@ function readEntryChanges(event) {
   const parent = parts.reduce((target, name) => target[name], week.days[dayIndex]);
   parent[last] = event.target.value;
   markDraft();
+}
+function rememberEntry(event) {
+  const path = event.target.dataset.path || '';
+  const category = /^(meals|soups)\.\d+\.name$/.test(path)
+    ? (path.startsWith('meals') ? 'dishes' : 'soups')
+    : /^meals\.\d+\.sides\.\d+$/.test(path) ? 'sides' : '';
+  const name = clean(event.target.value);
+  if (category && name && !cache.library[category].some(item => fold(item) === fold(name))) {
+    stage({ entries: { [category]: [name] } });
+  }
 }
 function alterDay(event) {
   const button = event.target.closest('button');
@@ -445,7 +489,18 @@ function collectWeek() {
   };
 }
 function saveWeek() {
-  stage({ entries: collectWeek(), history: [{ id: identifier(), saved: new Date().toISOString(), data: clone(week) }] });
+  const latest = read(keys.state, initialState).data.history;
+  const moved = originalWeekStart !== week.start;
+  if (moved && latest.some(item => item.data.start === week.start)) {
+    notify('Pre nový dátum už existuje uložené menu. Vyber iný dátum.', true);
+    return;
+  }
+  const replacedHistoryIds = moved ? latest.filter(item => item.data.start === originalWeekStart).map(item => item.id) : [];
+  stage({
+    entries: collectWeek(),
+    replacedHistoryIds,
+    history: [{ id: identifier(), saved: new Date().toISOString(), data: clone(week) }]
+  });
   updateDrafts(drafts => { delete drafts[week.start]; });
   archiveStart = week.start;
   setWeek(week);
@@ -817,6 +872,12 @@ if (kitchenMode) {
     }
   };
   $('day-editor').addEventListener('input', readEntryChanges);
+  $('day-editor').addEventListener('change', rememberEntry);
+  $('day-editor').addEventListener('keydown', event => {
+    if (event.key !== 'Enter' || event.isComposing || !event.target.dataset.path) return;
+    event.preventDefault();
+    event.target.blur();
+  });
   $('day-editor').onclick = alterDay;
   $('picker-search').oninput = renderPicker;
   document.querySelectorAll('[data-close]').forEach(button => {
@@ -825,10 +886,7 @@ if (kitchenMode) {
   document.querySelectorAll('[data-view]').forEach(button => {
     button.onclick = () => openView(button.dataset.view);
   });
-  $('start').onchange = event => {
-    if (event.target.value) openWeek(monday(event.target.value));
-    else renderEditor();
-  };
+  $('start').onchange = event => changeWeekDate(event.target.value);
   $('save').onclick = saveWeek;
   $('load-last').onclick = () => showSavedWeek(cache.history[0]);
   $('archive-week').onchange = event => {
@@ -839,7 +897,11 @@ if (kitchenMode) {
   };
   $('archive').onclick = event => {
     const button = event.target.closest('[data-open-week]');
-    if (button) openWeek(button.dataset.openWeek);
+    if (button) {
+      openWeek(button.dataset.openWeek);
+      $('start').focus({ preventScroll: true });
+      $('start').scrollIntoView({ block: 'nearest' });
+    }
   };
   $('new-week').onclick = () => openWeek(iso(dateAt(week.start, 7)));
   $('print').onclick = () => {
