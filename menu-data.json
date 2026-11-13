@@ -1,5 +1,16 @@
 {
   "schema": 1,
-  "library": {"dishes": [], "soups": [], "sides": []},
+  "library": {
+    "dishes": [
+      "Vyprážaný syr"
+    ],
+    "soups": [
+      "Kurací vývar"
+    ],
+    "sides": [
+      "Hranolky",
+      "Tatarská omáčka"
+    ]
+  },
   "history": []
 }
