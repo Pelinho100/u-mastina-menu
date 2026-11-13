@@ -266,6 +266,11 @@
   "allergenProfiles": {
     "soups:rajcinova so syrom": [
       7
-    ]
+    ],
+    "dishes:vyprazane filety z heika": [
+      4
+    ],
+    "sides:stuchane zemiaky": [],
+    "sides:uhorkovy salat": []
   }
 }
