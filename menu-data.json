@@ -271,6 +271,15 @@
       4
     ],
     "sides:stuchane zemiaky": [],
-    "sides:uhorkovy salat": []
+    "sides:uhorkovy salat": [],
+    "dishes:ciernohorsky rezen": [
+      1,
+      3
+    ],
+    "sides:opekane zemiaky": [],
+    "sides:tatarska omacka": [
+      3,
+      10
+    ]
   }
 }
