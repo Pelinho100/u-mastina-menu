@@ -14,3 +14,31 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 :root,body{background:white;color:black}.app-header,.sidebar,.work-area,.preview-title,.kitchen-tools,#kitchen-status,dialog{display:none!important}.workspace,.preview-pane{display:block;width:210mm;margin:0;padding:0;border:0;background:white;height:auto;overflow:visible}#paper-frame{width:210mm!important;height:297mm!important;max-width:none;overflow:visible;margin:0;box-shadow:none}.paper{transform:none!important}
 #kitchen-days{display:block;padding:0}.kitchen-day{width:210mm;min-height:296mm;padding:15mm;border:0;border-radius:0;break-after:page}.kitchen-day:last-child{break-after:auto}.kitchen-day h2{font-size:31pt}.kitchen-day time{font-size:18pt}.kitchen-day .print-row{font-size:21pt}.kitchen-day .print-row small{font-size:16pt}.kitchen-day .print-group h4{font-size:13pt}.kitchen-day .print-row{break-inside:avoid}
 }
+
+.settings-fields{min-width:0;margin:0 0 15px;padding:10px 12px 13px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.settings-fields legend{font-size:14px;font-weight:750;padding:0 6px}
+#start-pairing{margin:7px 0}#pairing-offer{display:grid;justify-items:center;text-align:center;margin:10px 0}
+#pairing-qr{display:block;width:min(270px,100%);height:auto;image-rendering:pixelated}
+#approve-pairing{border-top:1px solid var(--line);margin-top:12px;padding-top:5px}
+.paper-header{border-top:3px double #161616;border-bottom:3px double #161616;padding:9px 0 10px}
+.paper-header .restaurant{font:700 15px/1.1 Georgia,serif;letter-spacing:.16em}
+.paper-header h2{font-size:43px;font-weight:500;margin:3px 0 4px;letter-spacing:-.035em}
+.paper-range{display:flex;justify-content:center;align-items:center;gap:12px;font-size:13px}
+.paper-range span+span{border-left:1px solid #777;padding-left:12px}
+.paper-days{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;align-content:center;padding:12px 0}
+.print-day{padding:5px 10px 7px;border:0;border-top:1px solid #393939;border-bottom:1px solid #a1a1a1}
+.print-day h3{font:700 18px/1.15 Georgia,serif;padding:0 0 4px;border-bottom:1px solid #8a8a8a}
+.print-day .print-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;margin-top:4px}
+.print-day .print-group h4{grid-column:1/-1;margin:0;font-size:9px}
+.print-day .print-row{font-size:13px;padding:2px 0;align-content:start}
+.print-day .print-row + .print-row{border-top:0}
+.print-day .print-row:nth-of-type(n+3){border-top:1px dotted #999}
+.print-day .print-row small{font-size:10.5px;margin-top:1px}
+.paper-footer{display:grid;gap:5px;padding-top:0;border-top:0;overflow-wrap:anywhere}
+.paper-orders{border:3px double #161616;padding:5px 10px 6px}
+.paper-orders h3,.paper-contact h3{font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.paper-orders p{font-size:12px}
+.order-details{display:flex;justify-content:center;align-items:baseline;gap:0 14px;flex-wrap:wrap;font-size:16px;margin:1px 0}
+.paper-contact{padding:3px 0 0;font-size:11px}
+.paper-note{font-size:11px;font-style:italic}
+@media(max-width:650px){.settings-fields{grid-template-columns:1fr}}

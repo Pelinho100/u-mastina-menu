@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor týždenného obedového menu U Mastina">
 <title>Týždenné menu | U Mastina</title>
-<link rel="stylesheet" href="tyzdenne-menu.css?v=6">
-<script defer src="tyzdenne-menu.js?v=6"></script>
+<link rel="stylesheet" href="tyzdenne-menu.css?v=7">
+<script defer src="menu-qr.js?v=7"></script>
+<script defer src="menu-pairing.js?v=7"></script>
+<script defer src="tyzdenne-menu.js?v=7"></script>
 </head>
 <body>
 <header class="app-header">
@@ -57,9 +59,9 @@
       <div id="database-list"></div>
     </section>
     <section id="settings" hidden>
-      <div class="section-head"><h1>Nastavenia</h1><p>Údaje pre lístok pre hostí</p></div>
-      <div id="settings-fields" class="settings-fields"></div>
-      <div class="settings-actions"><button id="backup" class="secondary">Stiahnuť zálohu</button><button id="restore" class="secondary">Importovať zálohu</button><input type="file" id="import-file" accept=".json,application/json" hidden></div>
+      <div class="section-head"><h1>Nastavenia</h1><p>Vyplnené údaje sa zobrazia na lístku pre hostí. Po synchronizácii budú uložené vo verejnom repozitári.</p></div>
+      <div id="settings-fields"></div>
+      <div class="settings-actions"><button id="save-settings" class="primary">Uložiť nastavenia</button><button id="backup" class="secondary">Stiahnuť zálohu</button><button id="restore" class="secondary">Importovať zálohu</button><input type="file" id="import-file" accept=".json,application/json" hidden></div>
     </section>
   </main>
   <aside class="preview-pane" aria-label="Náhľad jedálneho lístka">
@@ -80,13 +82,24 @@
 </dialog>
 <dialog id="github-dialog">
   <div class="dialog-title"><h2>GitHub synchronizácia</h2><button class="icon secondary" data-close="github-dialog" aria-label="Zavrieť">×</button></div>
-  <p>Databáza a uložené týždne sa zapisujú do verejného repozitára U Mastina. Prístup na zápis má držiteľ tokenu.</p>
-  <p>Vytvor <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub token</a> pre repozitár <strong>u-mastina-menu</strong> s právom <strong>Contents: Read and write</strong>. Na ďalšom zariadení zadaj token znova.</p>
+  <p>Databáza a uložené týždne sa zapisujú do verejného repozitára U Mastina. Pripoj sa raz na telefóne cez GitHub token. Ďalší prehliadač môžeš pripojiť cez QR kód.</p>
+  <button id="start-pairing" class="primary">Prihlásiť cez QR kód</button>
+  <div id="pairing-offer" hidden>
+    <canvas id="pairing-qr" role="img" aria-label="QR kód na prihlásenie z telefónu"></canvas>
+    <p>Na telefóne naskenuj kód, otvor odkaz a potvrď pripojenie. Kód platí 5 minút.</p>
+    <button id="cancel-pairing" class="secondary">Zrušiť QR kód</button>
+  </div>
+  <p id="manual-help">Vytvor <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub token</a> pre repozitár <strong>u-mastina-menu</strong> s právom <strong>Contents: Read and write</strong>. </p>
   <form id="github-form">
     <label for="github-token">GitHub token</label>
-    <div class="inline"><input id="github-token" type="password" required autocomplete="off" spellcheck="false"><button class="primary">Pripojiť</button></div>
+    <div class="inline"><input id="github-token" type="password" required autocomplete="off" spellcheck="false" autocapitalize="off"><button class="primary">Pripojiť</button></div>
   </form>
   <div class="settings-actions"><button id="sync-now" class="secondary" hidden>Synchronizovať teraz</button><button id="disconnect" class="secondary" hidden>Odpojiť</button></div>
+  <section id="approve-pairing" hidden>
+    <p>Potvrď prístup iba vtedy, ak si práve zobrazil QR kód na svojom počítači.</p>
+    <button id="confirm-pairing" class="primary">Potvrdiť prihlásenie počítača</button>
+    <button id="decline-pairing" class="secondary">Zrušiť</button>
+  </section>
   <p id="github-status" role="status"></p>
 </dialog>
 </body>

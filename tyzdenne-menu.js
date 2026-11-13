@@ -5,12 +5,13 @@ const days = ['Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok'];
 const categories = { dishes: 'Hlavné jedlá', soups: 'Polievky', sides: 'Prílohy' };
 const defaults = {
   restaurant: 'Reštaurácia U Mastina', title: 'Obedové menu', hours: '10:00 – 14:00',
-  orderphone: '', address: '', ico: '', phone: '', footer: ''
+  orderphone: '', orderemail: '', orderinfo: '', owner: '', address: '', ico: '', dic: '', icdph: '', phone: '', footer: ''
 };
 const settingsLabels = {
   restaurant: 'Názov reštaurácie', title: 'Nadpis lístka', hours: 'Čas podávania',
-  orderphone: 'Telefón na objednávky', address: 'Adresa', ico: 'IČO', phone: 'Kontaktný telefón',
-  footer: 'Poznámka pre hostí'
+  orderphone: 'Telefón na objednávky', orderemail: 'E-mail na objednávky', orderinfo: 'Pokyny k objednávke',
+  owner: 'Meno majiteľa alebo názov prevádzkovateľa', address: 'Adresa prevádzky', ico: 'IČO',
+  dic: 'DIČ', icdph: 'IČ DPH', phone: 'Kontaktný telefón', footer: 'Poznámka pre hostí'
 };
 const keys = {
   draft: 'umastina-weekly-v6-draft', state: 'umastina-weekly-v6-data',
@@ -105,6 +106,7 @@ function addHistory(data, items) {
   });
 }
 function applyOperation(data, op) {
+  if (op.settings) data.settings = { ...data.settings, ...normalizeSettings(op.settings) };
   if (op.entries) addEntries(data.library, op.entries);
   if (op.history) addHistory(data, op.history);
   if (op.edit) {
@@ -133,11 +135,19 @@ function legacyState() {
 const initialState = read(keys.state, null) || legacyState();
 let cache = initialState.data;
 let week = normalizeWeek(read(keys.draft, null) || read(keys.old, null) || cache.history[0]?.data || emptyWeek());
+function normalizeSettings(value) {
+  return Object.fromEntries(Object.keys(defaults).filter(key => typeof value?.[key] === 'string')
+    .map(key => [key, value[key].slice(0, 150)]));
+}
+let settingsDirty = false;
 let settings = {
   ...defaults,
   ...Object.fromEntries(['orderphone', 'address', 'ico', 'phone', 'footer'].map(key => [key, localStorage.getItem('mastina_' + key) || ''])),
-  ...read('umastina-weekly-v6-settings', {})
+  ...read('umastina-weekly-v6-settings', {}),
+  ...cache.settings,
+  ...read('umastina-weekly-v7-settings-draft', {})
 };
+settingsDirty = Boolean(read('umastina-weekly-v7-settings-draft', null));
 let dayIndex = 0;
 let category = 'dishes';
 let syncJob = null;
@@ -159,7 +169,7 @@ function stage(operation) {
   state.queue.push(entry);
   writeState(state);
   refreshLists();
-  if (token) sync().catch(showSyncError);
+  restoreConnection();
 }
 function markDraft() {
   draftDirty = true;
@@ -282,8 +292,15 @@ function renderDatabase() {
   $('database-list').innerHTML = matches.map(value => `<div class="db-row"><span>${esc(value)}</span><button class="secondary" data-rename="${esc(value)}">Premenovať</button><button class="remove" data-delete="${esc(value)}">Odobrať</button></div>`).join('') || '<p class="muted">Žiadne zodpovedajúce položky.</p>';
 }
 function renderSettings() {
-  $('settings-fields').innerHTML = Object.entries(settingsLabels).map(([key, label]) =>
-    `<label>${label}<input data-setting="${key}" maxlength="150" value="${esc(settings[key])}"></label>`
+  const groups = [
+    ['Jedálny lístok', ['restaurant', 'title', 'hours', 'footer']],
+    ['Objednávky', ['orderphone', 'orderemail', 'orderinfo']],
+    ['Prevádzkovateľ a kontakt', ['owner', 'address', 'ico', 'dic', 'icdph', 'phone']]
+  ];
+  $('settings-fields').innerHTML = groups.map(([heading, fields]) =>
+    `<fieldset class="settings-fields"><legend>${heading}</legend>${fields.map(key =>
+      `<label>${settingsLabels[key]}<input data-setting="${key}" maxlength="150" value="${esc(settings[key])}"${key === 'orderphone' || key === 'phone' ? ' inputmode="tel"' : key === 'orderemail' ? ' inputmode="email"' : ''}></label>`
+    ).join('')}</fieldset>`
   ).join('');
 }
 function dateLabel(saved) {
@@ -337,14 +354,24 @@ function fitPaper() {
 }
 function renderPreview() {
   const cards = week.days.map((day, i) => renderDay(day, i, week.start));
-  const contact = [settings.address, settings.ico && 'IČO ' + settings.ico, settings.phone && 'Tel. ' + settings.phone].filter(Boolean).map(esc).join(' · ');
+  const contact = [
+    settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
+    clean(settings.dic) && 'DIČ ' + clean(settings.dic), clean(settings.icdph) && 'IČ DPH ' + clean(settings.icdph),
+    clean(settings.phone) && 'Tel. ' + clean(settings.phone)
+  ].map(clean).filter(Boolean).map(esc);
+  const order = [settings.orderphone, settings.orderemail].map(clean).filter(Boolean).map(esc);
+  const orderInfo = clean(settings.orderinfo);
+  const note = clean(settings.footer);
   $('paper').innerHTML = `<div class="paper-inner"><header class="paper-header">
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
-    <h2>${esc(settings.title)}</h2><div class="paper-range">${range(week.start)}${settings.hours ? ' · ' + esc(settings.hours) : ''}</div></header>
-    <div class="paper-days"><div class="paper-column">${cards[0]}${cards[2]}${cards[4]}</div><div class="paper-column">${cards[1]}${cards[3]}</div></div>
-    ${contact || settings.orderphone || settings.footer ? '<footer class="paper-footer">' +
-      (settings.orderphone ? '<strong>Objednávky ' + esc(settings.orderphone) + '</strong>' : '') +
-      (contact ? '<span>' + contact + '</span>' : '') + (settings.footer ? '<span>' + esc(settings.footer) + '</span>' : '') + '</footer>' : ''}
+    <h2>${esc(settings.title)}</h2><div class="paper-range"><span>${range(week.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
+    <div class="paper-days">${cards.join('')}</div>
+    ${contact.length || order.length || orderInfo || note ? `<footer class="paper-footer">
+      ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
+        ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
+        ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
+      ${contact.length ? '<section class="paper-contact"><h3>Prevádzkovateľ a kontakt</h3><p>' + contact.join(' · ') + '</p></section>' : ''}
+      ${note ? '<p class="paper-note">' + esc(note) + '</p>' : ''}</footer>` : ''}
     </div>`;
   fitPaper();
 }
@@ -431,6 +458,7 @@ async function remoteData(auth = '') {
   const data = emptyData();
   addEntries(data.library, raw.library);
   addHistory(data, normalizeHistory(raw.history));
+  if (raw.settings) data.settings = normalizeSettings(raw.settings);
   return { sha: file.sha, data };
 }
 function encode(data) {
@@ -443,7 +471,7 @@ function syncLabels(message) {
   $('sync-state').textContent = message;
   $('github-status').textContent = message;
   $('open-sync').textContent = token ? 'GitHub synchronizácia' : 'Pripojiť GitHub';
-  $('github-form').hidden = Boolean(token);
+  pairingControls();
   $('sync-now').hidden = !token;
   $('disconnect').hidden = !token;
 }
@@ -476,6 +504,12 @@ async function syncWork(auth, verifyWrite) {
     for (const op of remaining) applyOperation(remote.data, op);
     writeState({ data: remote.data, queue: remaining });
     refreshLists();
+    if (!settingsDirty && cache.settings) {
+      Object.assign(settings, cache.settings);
+      localStorage.setItem('umastina-weekly-v6-settings', JSON.stringify(settings));
+      renderSettings();
+      renderPreview();
+    }
     if (!remaining.length) {
       syncLabels('Údaje sú synchronizované s GitHubom.');
       if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
@@ -524,7 +558,8 @@ async function importBackup(event) {
       for (const key of Object.keys(defaults)) {
         if (typeof incoming.settings[key] === 'string') settings[key] = incoming.settings[key];
       }
-      localStorage.setItem('umastina-weekly-v6-settings', JSON.stringify(settings));
+      settingsDirty = true;
+      localStorage.setItem('umastina-weekly-v7-settings-draft', JSON.stringify(settings));
       renderSettings();
       renderPreview();
     }
@@ -548,6 +583,115 @@ async function refreshKitchen() {
     $('kitchen-refresh').disabled = false;
   }
 }
+let activePairing = null;
+const pairingHash = location.hash;
+const approval = menuPairing.fromHash(pairingHash);
+let approvalPending = Boolean(approval);
+
+function pairingControls() {
+  $('start-pairing').hidden = Boolean(token || activePairing || approvalPending);
+  $('pairing-offer').hidden = !activePairing;
+  $('manual-help').hidden = Boolean(token || activePairing);
+  $('github-form').hidden = Boolean(token || activePairing);
+  $('approve-pairing').hidden = !(approvalPending && token);
+}
+function cancelPairing() {
+  if (activePairing) clearTimeout(activePairing.timer);
+  activePairing = null;
+  pairingControls();
+}
+async function connect(auth, verifyWrite) {
+  await sync(auth, verifyWrite);
+  await menuPairing.remember(auth);
+  token = auth;
+  sessionStorage.removeItem(keys.token);
+  syncLabels('Údaje sú synchronizované s GitHubom.');
+}
+function pairingStatus(message) {
+  $('github-status').textContent = message;
+}
+async function pollPairing(pairing) {
+  if (activePairing !== pairing) return;
+  if (!menuPairing.valid(pairing.offer)) {
+    cancelPairing();
+    pairingStatus('QR kód vypršal. Zobraz nový kód.');
+    return;
+  }
+  try {
+    const credential = await menuPairing.receive(pairing.offer);
+    if (activePairing !== pairing) return;
+    if (credential) {
+      cancelPairing();
+      await connect(credential.token, false);
+      await menuPairing.remove(pairing.offer, credential).catch(() => {});
+      return;
+    }
+  } catch (error) {
+    if (activePairing === pairing) cancelPairing();
+    pairingStatus(error.message);
+    return;
+  }
+  if (activePairing === pairing) pairing.timer = setTimeout(() => pollPairing(pairing), 6500);
+}
+async function startPairing() {
+  $('start-pairing').disabled = true;
+  try {
+    const pairing = await menuPairing.create(location.href);
+    drawMenuQr($('pairing-qr'), pairing.link);
+    activePairing = pairing;
+    pairingControls();
+    pairingStatus('Čakám na potvrdenie na telefóne…');
+    pairing.timer = setTimeout(() => pollPairing(pairing), 3000);
+  } catch {
+    cancelPairing();
+    pairingStatus('QR kód sa nepodarilo vytvoriť.');
+  } finally {
+    $('start-pairing').disabled = false;
+  }
+}
+async function approvePairing() {
+  if (!approvalPending || !token) return;
+  const button = $('confirm-pairing');
+  button.disabled = true;
+  try {
+    await menuPairing.approve(approval, token);
+    approvalPending = false;
+    pairingControls();
+    pairingStatus('Počítač je potvrdený. Prihlásenie na ňom prebehne o chvíľu.');
+  } catch (error) {
+    pairingStatus(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+async function restoreConnection() {
+  try {
+    const saved = await menuPairing.restore();
+    if (saved) token = saved;
+    else if (token) {
+      await menuPairing.remember(token);
+      sessionStorage.removeItem(keys.token);
+    }
+    if (token) {
+      syncLabels('Pripojené ku GitHubu');
+      sync().catch(error => { if (!approvalPending) showSyncError(error); });
+    }
+  } catch {
+    pairingStatus('Uložené prihlásenie sa nepodarilo načítať.');
+  }
+  if (!approvalPending) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!menuPairing.valid(approval)) {
+    approvalPending = false;
+    pairingControls();
+    pairingStatus('QR kód vypršal. Na počítači zobraz nový kód.');
+  } else {
+    pairingControls();
+    pairingStatus(token ? '' : 'Na telefóne sa najprv pripoj ku GitHubu pomocou tokenu. Potom potvrď počítač.');
+  }
+  if (!$('github-dialog').open) $('github-dialog').showModal();
+}
+
 if (kitchenMode) {
   document.title = 'Kuchyňa · Týždenné menu';
   document.body.classList.add('kitchen-mode');
@@ -657,8 +801,16 @@ if (kitchenMode) {
     const key = event.target.dataset.setting;
     if (!key) return;
     settings[key] = event.target.value;
-    localStorage.setItem('umastina-weekly-v6-settings', JSON.stringify(settings));
+    settingsDirty = true;
+    localStorage.setItem('umastina-weekly-v7-settings-draft', JSON.stringify(settings));
     renderPreview();
+  };
+  $('save-settings').onclick = () => {
+    settingsDirty = false;
+    localStorage.setItem('umastina-weekly-v6-settings', JSON.stringify(settings));
+    localStorage.removeItem('umastina-weekly-v7-settings-draft');
+    stage({ settings: clone(settings) });
+    notify(token ? 'Nastavenia uložené. Prebieha synchronizácia.' : 'Nastavenia uložené v tomto prehliadači.');
   };
   $('backup').onclick = backup;
   $('restore').onclick = () => $('import-file').click();
@@ -668,15 +820,16 @@ if (kitchenMode) {
     event.preventDefault();
     const input = $('github-token');
     const candidate = clean(input.value);
-    if (!candidate) return;
+    if (!/^github_pat_[a-zA-Z0-9_]+$/.test(candidate)) {
+      pairingStatus('Vlož GitHub token typu Fine-grained.');
+      return;
+    }
     input.value = '';
     const submit = event.target.querySelector('button');
     submit.disabled = true;
     try {
-      await sync(candidate, true);
-      token = candidate;
-      sessionStorage.setItem(keys.token, token);
-      syncLabels('Údaje sú synchronizované s GitHubom.');
+      await connect(candidate, true);
+      if (approvalPending) pairingStatus('Teraz môžeš potvrdiť prihlásenie počítača.');
     } catch (error) {
       showSyncError(error);
     } finally {
@@ -684,11 +837,25 @@ if (kitchenMode) {
     }
   };
   $('sync-now').onclick = () => sync().catch(showSyncError);
-  $('disconnect').onclick = () => {
+  $('disconnect').onclick = async () => {
     if (syncJob) return;
-    token = '';
-    sessionStorage.removeItem(keys.token);
-    syncLabels('Lokálne ukladanie');
+    try {
+      await menuPairing.forget();
+      token = '';
+      sessionStorage.removeItem(keys.token);
+      syncLabels('Lokálne ukladanie');
+    } catch {
+      pairingStatus('Uložené prihlásenie sa nepodarilo odstrániť.');
+    }
+  };
+  $('start-pairing').onclick = startPairing;
+  $('cancel-pairing').onclick = () => { cancelPairing(); pairingStatus('QR kód bol zrušený.'); };
+  $('github-dialog').addEventListener('close', cancelPairing);
+  $('confirm-pairing').onclick = approvePairing;
+  $('decline-pairing').onclick = () => {
+    approvalPending = false;
+    pairingControls();
+    $('github-dialog').close();
   };
   window.addEventListener('storage', event => {
     if (event.key !== keys.state) return;
@@ -697,5 +864,5 @@ if (kitchenMode) {
   });
   window.addEventListener('online', () => { if (token) sync().catch(showSyncError); });
   window.addEventListener('focus', () => { if (token) sync().catch(showSyncError); });
-  if (token) sync().catch(showSyncError);
+  restoreConnection();
 }
