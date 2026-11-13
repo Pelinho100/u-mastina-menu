@@ -11,7 +11,7 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 @media(max-width:650px){.workspace{display:block}.sidebar{gap:10px;padding:10px}.sidebar nav{grid-template-columns:repeat(3,minmax(0,1fr))}.sidebar nav button{font-size:12px;gap:3px;padding:5px}.sidebar-section{grid-template-columns:1fr 1fr;align-items:center}.sidebar-section label:not(:first-child){margin:0}.sidebar-bottom{display:flex;align-items:center;flex-wrap:wrap}.work-area,.preview-pane{padding:12px}.sides{grid-template-columns:repeat(2,minmax(0,1fr))}.day-tabs{overflow:auto}.day-tabs button{font-size:11px}#kitchen-days{grid-template-columns:1fr;padding:10px}.app-header{padding:12px}.toolbar{gap:5px}.toolbar>*{font-size:12px}}
 @page{size:A4 portrait;margin:0}
 @media print{
-:root,body{background:white;color:black}.app-header,.sidebar,.work-area,.preview-title,.kitchen-tools,#kitchen-status,dialog{display:none!important}.workspace,.preview-pane{display:block;width:210mm;margin:0;padding:0;border:0;background:white;height:auto;overflow:visible}#paper-frame{width:210mm!important;height:297mm!important;max-width:none;overflow:visible;margin:0;box-shadow:none}.paper{transform:none!important}
+:root,body{background:white;color:black}.app-header,.sidebar,.work-area,.preview-title,.kitchen-tools,#kitchen-status,dialog{display:none!important}.workspace,.preview-pane{display:block;width:210mm;margin:0;padding:0;border:0;background:white;height:auto;overflow:visible}#paper-frame{width:210mm;height:296.9mm;max-width:none;overflow:hidden;margin:0;box-shadow:none}.paper{position:absolute;inset:0 auto auto 0;transform:none!important}
 #kitchen-days{display:block;padding:0}.kitchen-day{width:210mm;min-height:296mm;padding:15mm;border:0;border-radius:0;break-after:page}.kitchen-day:last-child{break-after:auto}.kitchen-day h2{font-size:31pt}.kitchen-day time{font-size:18pt}.kitchen-day .print-row{font-size:21pt}.kitchen-day .print-row small{font-size:16pt}.kitchen-day .print-group h4{font-size:13pt}.kitchen-day .print-row{break-inside:avoid}
 }
 
@@ -22,7 +22,7 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 #approve-pairing{border-top:1px solid var(--line);margin-top:12px;padding-top:5px}
 .paper{padding:11mm 12mm;-webkit-text-size-adjust:none;text-size-adjust:none}
 .paper::before{content:"";position:absolute;inset:5mm;border:1px solid #777;pointer-events:none}
-.paper-inner{min-height:0}
+.paper-inner{min-height:100%}.paper-inner>*{flex-shrink:0}
 .paper-header{border:0;padding:3px 0 15px;text-align:center}
 .paper-ornament{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px auto 11px}
 .paper-ornament::before,.paper-ornament::after{content:"";height:1px;width:42px;background:#737373}
@@ -43,7 +43,7 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 .print-day .print-row small{font:italic 12px/1.22 Georgia,serif;margin-top:2px}
 .print-day .meal-number{font-size:11px;color:#454545;font-variant-numeric:tabular-nums;margin-right:2px}
 .paper-days .empty-print{display:none}
-.paper-footer{display:grid;gap:6px;margin-top:14px;padding-top:0;border:0;overflow-wrap:anywhere}
+.paper-footer{display:grid;gap:6px;margin-top:auto;padding-top:14px;border:0;overflow-wrap:anywhere}
 .paper-orders{border:1px solid #606060;padding:7px 10px 8px}
 .paper-orders h3,.paper-contact h3{font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase}
 .paper-orders p{font-size:12px}
@@ -51,7 +51,7 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 .paper-contact{padding:3px 0 0;font-size:11px}
 .paper-note{font-size:11px;font-style:italic}
 @media screen{
-  #paper-frame{width:100%}
+  #paper-frame{width:100%;aspect-ratio:210 / 297}
   .paper{position:absolute;top:0;left:0}
 }
 @media screen and (max-width:650px){

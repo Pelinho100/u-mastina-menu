@@ -395,18 +395,21 @@ function fitPaper() {
   const inner = paper.firstElementChild;
   if (!frame.clientWidth || !inner) return;
   const size = getComputedStyle(paper);
-  const available = paper.clientHeight - parseFloat(size.paddingTop) - parseFloat(size.paddingBottom) - 2;
+  const height = parseFloat(size.height) - parseFloat(size.paddingTop) - parseFloat(size.paddingBottom);
   inner.style.transform = '';
   inner.style.width = '100%';
-  let fit = Math.min(1, available / inner.offsetHeight);
+  inner.style.minHeight = '0';
+  // Measure the natural layout, then scale it as one unit so the footer
+  // still reaches the bottom when a full week needs smaller type.
+  const fit = Math.min(1, height / (inner.offsetHeight + 1));
   if (fit < 1) {
-    inner.style.width = (100 / fit) + '%';
-    fit = Math.min(fit, available / inner.offsetHeight);
+    inner.style.width = 100 / fit + '%';
+    // A wider line can fit more text. Keep the initial scale to fit the
+    // widest content and fill the remaining height with flexible space.
     inner.style.transform = 'scale(' + fit + ')';
   }
-  const scale = frame.clientWidth / paper.offsetWidth;
-  paper.style.transform = 'scale(' + scale + ')';
-  frame.style.height = paper.offsetHeight * scale + 'px';
+  inner.style.minHeight = height / fit + 'px';
+  paper.style.transform = 'scale(' + frame.clientWidth / parseFloat(size.width) + ')';
 }
 function renderPreview() {
   const saved = $('archive').hidden ? null : cache.history.find(item => item.data.start === archiveStart);
@@ -790,6 +793,7 @@ if (kitchenMode) {
   syncLabels(token ? 'Pripojené ku GitHubu' : 'Lokálne ukladanie');
   new ResizeObserver(fitPaper).observe(document.querySelector('.preview-pane'));
   window.addEventListener('beforeprint', fitPaper);
+  window.addEventListener('afterprint', fitPaper);
   $('day-tabs').onclick = event => {
     const button = event.target.closest('[data-day]');
     if (button) {
