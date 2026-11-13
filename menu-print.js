@@ -109,7 +109,9 @@ const menuPrint = (() => {
             const priceWidth = price ? ctx.measureText(price).width + 8 : 0;
             const nameEnd = label(row.querySelector('strong').textContent, x, y, columnWidth - priceWidth, size, 'Arial', 'bold');
             label(price, x + columnWidth, y, priceWidth, size, 'Arial', 'bold', 'right');
-            end = Math.max(end, label(row.querySelector('small')?.textContent, x, nameEnd + 2, columnWidth, kitchen ? 23 : 9, 'Georgia', 'italic'));
+            const sidesEnd = label(row.querySelector('small')?.textContent, x, nameEnd + 2, columnWidth, kitchen ? 23 : 9, 'Georgia', 'italic');
+            const allergensEnd = label(row.querySelector('.print-allergens')?.textContent, x, sidesEnd, columnWidth, 8.5, 'Arial', 'bold');
+            end = Math.max(end, allergensEnd);
           }
           y = end + (kitchen ? 13 : 3);
         }

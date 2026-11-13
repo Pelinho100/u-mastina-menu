@@ -73,3 +73,18 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 @media(max-width:650px){.sidebar nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media screen and (max-width:650px){#github-token{font-size:16px}#github-dialog .dialog-title h2{font-size:19px;min-width:0}#github-dialog .dialog-title button{flex:none}}
+
+.allergen-button{margin-top:7px;font-size:12px;justify-self:start}
+.soup-line .allergen-button{grid-column:1/-1;margin-top:0}
+#allergen-fields fieldset{margin:0 0 12px;padding:8px;border:1px solid var(--line);min-width:0;border-radius:8px}
+#allergen-fields legend{padding:0 4px;font-weight:700;overflow-wrap:anywhere}
+.allergen-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,172px),1fr));gap:5px}
+#allergen-dialog label{display:flex;align-items:center;gap:5px}
+#allergen-dialog input[type=checkbox]{width:16px;min-height:0;height:16px;flex:none}
+.allergen-confirm{margin:10px 0}
+.print-allergens{grid-column:1/-1;font-size:10px;font-weight:650}
+.paper-footer .allergen-legend{font-size:10px;line-height:1.3}
+@media print{
+  .allergens-pending #paper-frame{display:none}
+  .allergens-pending #allergen-print-status{display:block;margin:12mm;color:black;background:white}
+}

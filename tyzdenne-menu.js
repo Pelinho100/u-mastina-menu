@@ -57,6 +57,108 @@ const emptyDay = () => ({ soups: [emptySoup(), emptySoup()], meals: Array.from({
 const emptyWeek = (start = monday()) => ({ start, days: days.map(emptyDay) });
 const emptyData = () => ({ schema: 1, library: { dishes: [], soups: [], sides: [] }, history: [] });
 
+const allergenNames = [
+  'Obilniny s lepkom', 'Kôrovce', 'Vajcia', 'Ryby', 'Arašidy', 'Sója',
+  'Mlieko vrátane laktózy', 'Škrupinové plody', 'Zeler', 'Horčica', 'Sezam',
+  'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
+];
+const allergenHints = [
+  [/\b(vyprazan\w* syr\w*|trojobal\w*|obalovan\w*|ciernohorsk\w* rezen)\b/, [1, 3]],
+  [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*)\b/, [1]],
+  [/\b(vajc\w*|vajec\w*|majonez\w*)\b/, [3]],
+  [/\b(ryb\w*|heik\w*|losos\w*|tuniak\w*|tresk\w*|pstruh\w*)\b/, [4]],
+  [/\b(krevet\w*|krab\w*|homar\w*)\b/, [2]],
+  [/\b(arasid\w*|burak\w*)\b/, [5]],
+  [/\b(soj\w*|tofu)\b/, [6]],
+  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*)\b/, [7]],
+  [/\b(orech\w*|mandl\w*|pistaci\w*|kesu)\b/, [8]],
+  [/\b(zeler\w*|vyvar\w*|bujon\w*)\b/, [9]],
+  [/\b(horcic\w*)\b/, [10]],
+  [/\b(tatarsk\w*)\b/, [3, 10]],
+  [/\b(sezam\w*)\b/, [11]],
+  [/\b(vlc\w* bob\w*|lupin\w*)\b/, [13]],
+  [/\b(musl\w*|ustric\w*|kalamar\w*|chobotnic\w*|slavk\w*)\b/, [14]]
+];
+function allergenCodes(values) {
+  return [...new Set(list(values).filter(code => Number.isInteger(code) && code >= 1 && code <= allergenNames.length))]
+    .sort((a, b) => a - b);
+}
+function suggestedAllergens(name) {
+  const normalized = fold(name);
+  return allergenCodes(allergenHints.flatMap(([pattern, codes]) => pattern.test(normalized) ? codes : []));
+}
+function normalizeProfiles(profiles) {
+  return Object.fromEntries(Object.entries(profiles || {}).filter(([key, codes]) =>
+    /^(dishes|soups|sides):.+/.test(key) && Array.isArray(codes)
+  ).map(([key, codes]) => [key, allergenCodes(codes)]));
+}
+function allergenComponents(item, kind) {
+  const entries = [[kind, item.name], ...list(item.sides).map(side => ['sides', side])];
+  return entries.filter(([, name]) => clean(name)).map(([category, name]) => {
+    const key = category + ':' + fold(name);
+    const confirmed = cache.allergenProfiles?.[key];
+    return { key, name, confirmed, codes: confirmed ?? suggestedAllergens(name) };
+  });
+}
+function allergenReview(item, kind) {
+  const components = allergenComponents(item, kind);
+  return {
+    codes: allergenCodes(components.flatMap(component => component.codes)),
+    pending: components.some(component => component.confirmed === undefined)
+  };
+}
+function weekAllergens(menu, archived) {
+  return menu.days.flatMap((day, i) =>
+    [['soups', day.soups], ['dishes', day.meals]].flatMap(([kind, entries]) =>
+      entries.filter(item => clean(item.name)).map(item => ({
+        name: clean(item.name), day: days[i],
+        pending: archived ? !Array.isArray(item.allergens) : allergenReview(item, kind).pending
+      }))
+    )
+  );
+}
+function allergenButton(kind, index) {
+  return `<button type="button" class="secondary allergen-button" data-allergens="${kind}.${index}" aria-haspopup="dialog">Alergény</button>`;
+}
+function updateAllergenButtons() {
+  for (const button of $('day-editor').querySelectorAll('[data-allergens]')) {
+    const [kind, index] = button.dataset.allergens.split('.');
+    const item = week.days[dayIndex][kind][index];
+    const review = allergenReview(item, kind === 'meals' ? 'dishes' : 'soups');
+    button.hidden = !clean(item.name);
+    button.textContent = review.pending ? 'Alergény na kontrolu' + (review.codes.length ? ' · ' + review.codes.join(', ') : '')
+      : 'Alergény overené' + (review.codes.length ? ' · ' + review.codes.join(', ') : '');
+  }
+}
+function openAllergens(path) {
+  const [kind, index] = path.split('.');
+  const item = week.days[dayIndex][kind][index];
+  if (!clean(item?.name)) return;
+  const components = [...new Map(allergenComponents(item, kind === 'meals' ? 'dishes' : 'soups')
+    .map(component => [component.key, component])).values()];
+  $('allergen-title').textContent = 'Alergény – ' + item.name;
+  $('allergen-fields').innerHTML = components.map((component, componentIndex) => `
+    <fieldset><legend>${esc(component.name)}</legend>
+      <p class="muted">${component.confirmed !== undefined ? 'Uložené podľa receptúry' : 'Návrh podľa názvu. Skontroluj receptúru a etikety.'}</p>
+      <div class="allergen-options">${allergenNames.map((name, i) =>
+        `<label><input type="checkbox" name="component-${componentIndex}" value="${i + 1}" ${component.codes.includes(i + 1) ? 'checked' : ''}> ${i + 1}. ${name}</label>`
+      ).join('')}</div>
+    </fieldset>`).join('');
+  $('allergen-confirm').checked = false;
+  $('allergen-form').onsubmit = event => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const profiles = Object.fromEntries(components.map((component, i) =>
+      [component.key, form.getAll('component-' + i).map(Number)]
+    ));
+    stage({ allergenProfiles: profiles });
+    updateAllergenButtons();
+    renderPreview();
+    $('allergen-dialog').close();
+  };
+  $('allergen-dialog').showModal();
+}
+
 function normalizeWeek(raw) {
   const start = monday(raw?.start);
   return {
@@ -65,9 +167,10 @@ function normalizeWeek(raw) {
       const day = raw?.days?.[i];
       if (!day) return emptyDay();
       return {
-        soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price) })),
+        soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price), allergens: Array.isArray(soup?.allergens) ? allergenCodes(soup.allergens) : undefined })),
         meals: list(day.meals).map(meal => ({
           name: text(meal?.name), price: text(meal?.price),
+          allergens: Array.isArray(meal?.allergens) ? allergenCodes(meal.allergens) : undefined,
           sides: Array.from({ length: 5 }, (_, j) => text(meal?.sides?.[j] ?? meal?.['side' + (j + 1)] ?? (j === 0 ? meal?.side : '')))
         }))
       };
@@ -106,6 +209,7 @@ function addHistory(data, items) {
   });
 }
 function applyOperation(data, op) {
+  if (op.allergenProfiles) data.allergenProfiles = { ...data.allergenProfiles, ...normalizeProfiles(op.allergenProfiles) };
   if (op.settings) data.settings = { ...data.settings, ...normalizeSettings(op.settings) };
   if (op.entries) addEntries(data.library, op.entries);
   if (op.replacedHistoryIds) {
@@ -280,16 +384,18 @@ function renderEditor() {
     <h2 class="day-heading">${days[dayIndex]} · ${formatDate(week.start, dayIndex)}</h2>
     <section class="edit-card"><div class="card-title"><h3>Polievky</h3>${day.soups.length < 2 ? '<button class="secondary" data-action="add-soup">+ Pridať polievku</button>' : ''}</div>
       ${day.soups.map((soup, i) => `<div class="soup-line">${pickerField('soups', 'soups.' + i + '.name', 'Polievka ' + (i + 1), soup.name)}
-        ${priceField('soups.' + i + '.price', soup.price)}<button class="icon remove" data-action="remove-soup" data-index="${i}" aria-label="Odobrať polievku ${i + 1}" title="Odobrať polievku">×</button></div>`).join('')}
+        ${priceField('soups.' + i + '.price', soup.price)}<button class="icon remove" data-action="remove-soup" data-index="${i}" aria-label="Odobrať polievku ${i + 1}" title="Odobrať polievku">×</button>${allergenButton('soups', i)}</div>`).join('')}
       ${day.soups.length ? '' : '<p class="muted">Bez polievky</p>'}
     </section>
     <div class="card-title"><h3>Hlavné jedlá</h3><button class="primary" data-action="add-meal">+ Pridať jedlo</button></div>
     ${day.meals.map((meal, i) => `<section class="meal-card"><div class="card-title"><h3>Jedlo ${i + 1}</h3><button class="remove" data-action="remove-meal" data-index="${i}" aria-label="Odobrať jedlo ${i + 1}">× Odobrať</button></div>
       <div class="meal-top">${pickerField('dishes', 'meals.' + i + '.name', 'Hlavné jedlo', meal.name)}${priceField('meals.' + i + '.price', meal.price)}</div>
       <h3 class="sides-heading">Prílohy</h3><div class="sides">${meal.sides.map((side, j) => pickerField('sides', 'meals.' + i + '.sides.' + j, 'Príloha ' + (j + 1), side)).join('')}</div>
+      ${allergenButton('meals', i)}
     </section>`).join('')}
     ${day.meals.length ? '<button class="add-meal secondary" data-action="add-meal">+ Pridať jedlo</button>' : ''}
   `;
+  updateAllergenButtons();
 }
 function readEntryChanges(event) {
   const path = event.target.dataset.path;
@@ -299,6 +405,7 @@ function readEntryChanges(event) {
   const parent = parts.reduce((target, name) => target[name], week.days[dayIndex]);
   parent[last] = event.target.value;
   markDraft();
+  updateAllergenButtons();
 }
 function rememberEntry(event) {
   const path = event.target.dataset.path || '';
@@ -313,6 +420,10 @@ function rememberEntry(event) {
 function alterDay(event) {
   const button = event.target.closest('button');
   if (!button) return;
+  if (button.dataset.allergens) {
+    openAllergens(button.dataset.allergens);
+    return;
+  }
   if (button.dataset.pick) {
     pickerTarget = $(button.dataset.target);
     $('picker-title').textContent = lookupLabels[button.dataset.pick];
@@ -420,11 +531,14 @@ function priceLabel(raw) {
     ? new Intl.NumberFormat('sk-SK', { style: 'currency', currency: 'EUR' }).format(Number(value))
     : esc(value) + ' €';
 }
-function renderDay(day, i, start, kitchen = false) {
+function renderDay(day, i, start, kitchen = false, archived = true) {
   const heading = kitchen ? 'h2' : 'h3';
   const renderRows = (items, meals) => items.filter(item => clean(item.name)).map((item, row) => {
     const sides = list(item.sides).map(clean).filter(Boolean);
-    return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}</div>`;
+    const review = kitchen || archived ? null : allergenReview(item, meals ? 'dishes' : 'soups');
+    const codes = review ? (review.pending ? null : review.codes) : item.allergens;
+    const allergens = !kitchen && codes?.length ? '<div class="print-allergens">Obsahuje: ' + codes.join(', ') + '</div>' : '';
+    return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}${allergens}</div>`;
   }).join('');
   const soups = renderRows(day.soups, false);
   const meals = renderRows(day.meals, true);
@@ -458,7 +572,14 @@ function fitPaper() {
 function renderPreview() {
   const saved = $('archive').hidden ? null : cache.history.find(item => item.data.start === archiveStart);
   const previewWeek = saved?.data || week;
-  const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start));
+  const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start, false, Boolean(saved)));
+  const entries = weekAllergens(previewWeek, Boolean(saved));
+  const pending = entries.filter(item => item.pending);
+  $('allergen-print-status').hidden = !pending.length;
+  $('allergen-print-status').textContent = pending.length
+    ? 'Pred tlačou over alergény v editore (' + pending.length + ' položiek).' + (saved ? ' Potom týždeň znovu ulož.' : '')
+    : '';
+  document.body.classList.toggle('allergens-pending', Boolean(pending.length));
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
     clean(settings.dic) && 'DIČ ' + clean(settings.dic), clean(settings.icdph) && 'IČ DPH ' + clean(settings.icdph),
@@ -472,7 +593,8 @@ function renderPreview() {
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
     <h2>${esc(settings.title)}</h2><div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
-    ${contact.length || order.length || orderInfo || note ? `<footer class="paper-footer">
+    ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer">
+      ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
         ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
         ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
@@ -496,10 +618,19 @@ function saveWeek() {
     return;
   }
   const replacedHistoryIds = moved ? latest.filter(item => item.data.start === originalWeekStart).map(item => item.id) : [];
+  const savedWeek = clone(week);
+  for (const day of savedWeek.days) {
+    for (const [kind, items] of [['soups', day.soups], ['dishes', day.meals]]) {
+      for (const item of items) {
+        const review = allergenReview(item, kind);
+        item.allergens = review.pending ? undefined : review.codes;
+      }
+    }
+  }
   stage({
     entries: collectWeek(),
     replacedHistoryIds,
-    history: [{ id: identifier(), saved: new Date().toISOString(), data: clone(week) }]
+    history: [{ id: identifier(), saved: new Date().toISOString(), data: savedWeek }]
   });
   updateDrafts(drafts => { delete drafts[week.start]; });
   archiveStart = week.start;
@@ -589,6 +720,7 @@ async function remoteData(auth = '') {
   const data = emptyData();
   addEntries(data.library, raw.library);
   addHistory(data, normalizeHistory(raw.history));
+  if (raw.allergenProfiles) data.allergenProfiles = normalizeProfiles(raw.allergenProfiles);
   if (raw.settings) data.settings = normalizeSettings(raw.settings);
   return { sha: file.sha, data };
 }
@@ -635,6 +767,8 @@ async function syncWork(auth, verifyWrite) {
     for (const op of remaining) applyOperation(remote.data, op);
     writeState({ data: remote.data, queue: remaining });
     refreshLists();
+    updateAllergenButtons();
+    renderPreview();
     if (!settingsDirty && cache.settings) {
       Object.assign(settings, cache.settings);
       localStorage.setItem('umastina-weekly-v6-settings', JSON.stringify(settings));
@@ -671,7 +805,7 @@ function openView(view) {
   document.querySelector('.work-area').scrollTop = 0;
 }
 function backup() {
-  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, history: cache.history, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, allergenProfiles: cache.allergenProfiles, history: cache.history, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = 'u-mastina-tyzden-zaloha.json';
@@ -688,7 +822,7 @@ async function importBackup(event) {
     const imported = normalizeWeek(incoming.data);
     const localDrafts = read(keys.drafts, {});
     if (localDrafts[imported.start] && !confirm('Nahradiť rozpracované menu pre ' + range(imported.start) + ' touto zálohou?')) return;
-    stage({ entries: incoming.library, history: normalizeHistory(incoming.history) });
+    stage({ entries: incoming.library, allergenProfiles: incoming.allergenProfiles, history: normalizeHistory(incoming.history) });
     updateDrafts(drafts => {
       for (const draft of Object.values(incoming.drafts || {})) {
         if (!Array.isArray(draft?.days) || draft.days.length !== 5) continue;
@@ -905,6 +1039,13 @@ if (kitchenMode) {
   };
   $('new-week').onclick = () => openWeek(iso(dateAt(week.start, 7)));
   $('print').onclick = () => {
+    const saved = $('archive').hidden ? null : cache.history.find(item => item.data.start === archiveStart);
+    const pending = weekAllergens(saved?.data || week, Boolean(saved)).filter(item => item.pending);
+    if (pending.length) {
+      alert('Pred tlačou over alergény:\n' + pending.map(item => item.day + ' · ' + item.name).join('\n') +
+        (saved ? '\n\nOtvor týždeň v editore a po overení ho znovu ulož.' : ''));
+      return;
+    }
     const issues = $('archive').hidden ? warnings() : [];
     if (!issues.length || confirm(issues.join('\n') + '\n\nVytlačiť aj tak?')) menuPrint.open([$('paper')]);
   };
@@ -1012,6 +1153,8 @@ if (kitchenMode) {
     if (event.key === keys.state) {
       cache = read(keys.state, initialState).data;
       refreshLists();
+      updateAllergenButtons();
+      renderPreview();
     }
   });
   window.addEventListener('online', () => { if (token) sync().catch(showSyncError); });

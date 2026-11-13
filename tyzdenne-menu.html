@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor týždenného obedového menu U Mastina">
 <title>Týždenné menu | U Mastina</title>
-<link rel="stylesheet" href="tyzdenne-menu.css?v=11">
+<link rel="stylesheet" href="tyzdenne-menu.css?v=14">
 <script defer src="menu-qr.js?v=8"></script>
 <script defer src="menu-pairing.js?v=8"></script>
-<script defer src="menu-print.js?v=13"></script>
-<script defer src="tyzdenne-menu.js?v=13"></script>
+<script defer src="menu-print.js?v=14"></script>
+<script defer src="tyzdenne-menu.js?v=14"></script>
 </head>
 <body>
 <header class="app-header">
@@ -80,6 +80,7 @@
   </main>
   <aside class="preview-pane" aria-label="Náhľad jedálneho lístka">
     <div class="preview-title"><strong>Náhľad pre hostí</strong><span>A4 · na výšku</span></div>
+    <p id="allergen-print-status" class="notice" role="status" hidden></p>
     <div id="paper-frame"><article id="paper" class="paper"></article></div>
   </aside>
 </div>
@@ -88,6 +89,14 @@
   <p id="kitchen-status" role="status" hidden></p>
   <div id="kitchen-days"></div>
 </main>
+<dialog id="allergen-dialog">
+  <div class="dialog-title"><h2 id="allergen-title">Alergény</h2><button type="button" class="icon secondary" data-close="allergen-dialog" aria-label="Zavrieť alergény">×</button></div>
+  <form id="allergen-form">
+    <div id="allergen-fields"></div>
+    <label class="allergen-confirm"><input id="allergen-confirm" type="checkbox" required> Skontroloval som všetky uvedené položky podľa surovín a etikiet.</label>
+    <button class="primary" type="submit">Potvrdiť a zapamätať</button>
+  </form>
+</dialog>
 <dialog id="picker">
   <div class="dialog-title"><h2 id="picker-title"></h2><button class="icon secondary" data-close="picker" aria-label="Zavrieť výber">×</button></div>
   <label for="picker-search">Hľadať v uložených položkách</label>
