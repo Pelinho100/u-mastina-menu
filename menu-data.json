@@ -39,6 +39,285 @@
   },
   "history": [
     {
+      "id": "e8dbe02e-800b-4163-8161-7daab067b521",
+      "saved": "2026-11-13T15:48:35.143Z",
+      "data": {
+        "start": "2026-11-16",
+        "days": [
+          {
+            "soups": [
+              {
+                "name": "Rajčinová so syrom",
+                "price": "",
+                "allergens": [
+                  7
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Vyprážané filety z heika",
+                "price": "6",
+                "allergens": [
+                  4
+                ],
+                "sides": [
+                  "Zemiaková kaša",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Čiernohorský rezeň",
+                "price": "6",
+                "allergens": [
+                  1,
+                  3,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Bravčový rezeň",
+                "price": "6",
+                "allergens": [],
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "soups": [
+              {
+                "name": "Kurací vývar",
+                "price": "",
+                "allergens": [
+                  9
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Znojemská cigánska pečienka",
+                "price": "6",
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Vyprážaný syr",
+                "price": "6",
+                "allergens": [
+                  1,
+                  3,
+                  7,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Čiernohorský rezeň",
+                "price": "6",
+                "allergens": [
+                  1,
+                  3,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "soups": [
+              {
+                "name": "Gulášová",
+                "price": "",
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "Segedínsky guláš",
+                "price": "6",
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Knedla",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Gordon Blue",
+                "price": "6",
+                "allergens": [],
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Vyprážaný kurací rezeň",
+                "price": "6",
+                "allergens": [],
+                "sides": [
+                  "Zemiaková kaša",
+                  "Uhorka",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "soups": [
+              {
+                "name": "Kurací vývar",
+                "price": "",
+                "allergens": [
+                  9
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Plnená placka s bravčovým mäsom",
+                "price": "6",
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Zeleninový šalát",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Vyprážaný bravčový rezeň",
+                "price": "6",
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Pizza Regina",
+                "price": "7",
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Šunka",
+                  "Eidam",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "soups": [
+              {
+                "name": "Kurací vývar",
+                "price": "",
+                "allergens": [
+                  9
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Vykostené kuracie stehno na leči",
+                "price": "6",
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Čiernohorský rezeň",
+                "price": "6",
+                "allergens": [
+                  1,
+                  3,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Panini",
+                "price": "7",
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Šunka",
+                  "Eidam",
+                  "Cesnakový dresing",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "id": "c7c602b2-d47e-4e23-884c-e328059d9b7e",
       "saved": "2026-11-13T14:43:45.262Z",
       "data": {
