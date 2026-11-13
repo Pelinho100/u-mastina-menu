@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor týždenného obedového menu U Mastina">
 <title>Týždenné menu | U Mastina</title>
-<link rel="stylesheet" href="tyzdenne-menu.css?v=7">
-<script defer src="menu-qr.js?v=7"></script>
-<script defer src="menu-pairing.js?v=7"></script>
-<script defer src="tyzdenne-menu.js?v=7"></script>
+<link rel="stylesheet" href="tyzdenne-menu.css?v=8">
+<script defer src="menu-qr.js?v=8"></script>
+<script defer src="menu-pairing.js?v=8"></script>
+<script defer src="tyzdenne-menu.js?v=8"></script>
 </head>
 <body>
 <header class="app-header">
@@ -24,14 +24,14 @@
   <aside class="sidebar">
     <nav aria-label="Editor">
       <button data-view="editor" aria-current="page"><span aria-hidden="true">▤</span> Týždenné menu</button>
+      <button data-view="archive"><span aria-hidden="true">▣</span> Uložené týždne</button>
       <button data-view="database"><span aria-hidden="true">▦</span> Databáza jedál</button>
       <button data-view="settings"><span aria-hidden="true">⚙</span> Nastavenia</button>
     </nav>
     <div class="sidebar-section">
       <label for="start">Pondelok</label>
       <input id="start" type="date">
-      <label for="history">Uložené týždne</label>
-      <select id="history"><option value="">Vybrať z histórie</option></select>
+
     </div>
     <button id="new-week" class="secondary">+ Nový týždeň</button>
     <div class="sidebar-bottom">
@@ -43,9 +43,22 @@
   <main class="work-area">
     <div id="notice" class="notice" role="status" hidden></div>
     <section id="editor">
-      <div class="section-head"><h1>Týždenné menu</h1><p id="week-range"></p></div>
+      <div class="section-head"><h1>Týždenné menu</h1><p id="week-range"></p><p id="draft-status" class="draft-status" role="status"></p></div>
       <nav id="day-tabs" class="day-tabs" aria-label="Dni v týždni"></nav>
       <div id="day-editor"></div>
+    </section>
+    <section id="archive" hidden>
+      <div class="section-head"><h1>Uložené týždne</h1></div>
+      <section class="edit-card">
+        <label for="archive-week">Vyber týždeň</label>
+        <select id="archive-week"></select>
+        <div id="archive-details"></div>
+      </section>
+      <section class="edit-card archive-drafts">
+        <h2>Rozpracované menu</h2>
+        <p class="muted">Automaticky uložené v tomto prehliadači.</p>
+        <div id="draft-list"></div>
+      </section>
     </section>
     <section id="database" hidden>
       <div class="section-head"><h1>Databáza jedál</h1></div>

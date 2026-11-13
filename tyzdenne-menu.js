@@ -15,7 +15,7 @@ const settingsLabels = {
 };
 const keys = {
   draft: 'umastina-weekly-v6-draft', state: 'umastina-weekly-v6-data',
-  token: 'umastina-weekly-v6-token', old: 'umastina-weekly-v1'
+  drafts: 'umastina-weekly-v8-drafts', token: 'umastina-weekly-v6-token', old: 'umastina-weekly-v1'
 };
 const github = 'https://api.github.com/repos/Pelinho100/u-mastina-menu/contents/menu-data.json';
 const branch = 'menu-data';
@@ -155,7 +155,17 @@ let token = sessionStorage.getItem(keys.token) || '';
 let pickerTarget = null;
 let kitchenSelection = '';
 let kitchenShared = [];
-let draftDirty = Boolean(read(keys.draft + '-dirty', false));
+if (read(keys.draft + '-dirty', false)) {
+  const drafts = read(keys.drafts, {});
+  if (!drafts[week.start]) {
+    drafts[week.start] = week;
+    localStorage.setItem(keys.drafts, JSON.stringify(drafts));
+  }
+  localStorage.removeItem(keys.draft + '-dirty');
+}
+week = normalizeWeek(read(keys.drafts, {})[week.start] || week);
+let draftDirty = Boolean(read(keys.drafts, {})[week.start]);
+let archiveStart = '';
 
 function writeState(value) {
   localStorage.setItem(keys.state, JSON.stringify(value));
@@ -169,21 +179,42 @@ function stage(operation) {
   state.queue.push(entry);
   writeState(state);
   refreshLists();
-  restoreConnection();
+  if (token) sync().catch(showSyncError);
+}
+function updateDrafts(change) {
+  const drafts = read(keys.drafts, {});
+  change(drafts);
+  localStorage.setItem(keys.drafts, JSON.stringify(drafts));
+}
+function renderDraftStatus() {
+  $('draft-status').textContent = draftDirty
+    ? 'Rozpracované · automaticky uložené v tomto prehliadači'
+    : 'Zmeny sa priebežne ukladajú ako rozpracované menu.';
+  $('draft-status').classList.toggle('draft-active', draftDirty);
 }
 function markDraft() {
-  draftDirty = true;
+  updateDrafts(drafts => { drafts[week.start] = week; });
   localStorage.setItem(keys.draft, JSON.stringify(week));
-  localStorage.setItem(keys.draft + '-dirty', 'true');
+  if (!draftDirty) {
+    draftDirty = true;
+    renderDraftStatus();
+  }
   renderPreview();
 }
-function setWeek(next) {
+function setWeek(next, isDraft = false) {
   week = normalizeWeek(next);
-  draftDirty = false;
+  draftDirty = isDraft;
   localStorage.setItem(keys.draft, JSON.stringify(week));
-  localStorage.removeItem(keys.draft + '-dirty');
   renderEditor();
+  renderDraftStatus();
   renderPreview();
+}
+function openWeek(start) {
+  const draft = read(keys.drafts, {})[start];
+  const saved = cache.history.find(item => item.data.start === start);
+  dayIndex = 0;
+  setWeek(draft || saved?.data || emptyWeek(start), Boolean(draft));
+  openView('editor');
 }
 function notify(message, error = false) {
   $('notice').hidden = false;
@@ -307,10 +338,35 @@ function dateLabel(saved) {
   const parsed = /^\d{4}-\d\d-\d\dT/.test(saved) && new Date(saved);
   return parsed && !Number.isNaN(+parsed) ? parsed.toLocaleString('sk-SK') : saved;
 }
+function renderArchive() {
+  const weeks = new Map();
+  for (const item of cache.history) {
+    if (!weeks.has(item.data.start)) weeks.set(item.data.start, item);
+  }
+  const starts = [...weeks.keys()].sort().reverse();
+  archiveStart = weeks.has(archiveStart) ? archiveStart : starts[0] || '';
+  const selected = weeks.get(archiveStart);
+  $('archive-week').disabled = !starts.length;
+  $('archive-week').innerHTML = starts.length
+    ? starts.map(start => `<option value="${esc(start)}">${range(start)}</option>`).join('')
+    : '<option>Žiadne uložené týždne</option>';
+  if (selected) $('archive-week').value = archiveStart;
+  $('archive-details').innerHTML = selected ? `
+    <div class="archive-actions">
+      <span class="muted">${selected.saved ? 'Uložené ' + esc(dateLabel(selected.saved)) : ''}</span>
+      <button class="secondary" data-open-week="${esc(archiveStart)}">${read(keys.drafts, {})[archiveStart] ? 'Pokračovať v rozpísanej úprave' : 'Otvoriť v editore'}</button>
+    </div>
+    <div class="archive-days">${selected.data.days.map((day, i) => renderDay(day, i, archiveStart)).join('')}</div>
+  ` : '<p class="muted">Po kliknutí na „Uložiť týždeň“ sa tu zobrazí hotové menu.</p>';
+  const drafts = Object.keys(read(keys.drafts, {})).sort().reverse();
+  $('draft-list').innerHTML = drafts.length ? drafts.map(start =>
+    `<div class="archive-actions"><strong>${range(start)}</strong><button class="secondary" data-open-week="${esc(start)}">Pokračovať v úprave</button></div>`
+  ).join('') : '<p class="muted">Žiadne rozpracované týždne.</p>';
+}
 function refreshLists() {
-  const options = cache.history.map(item => `<option value="${esc(item.id)}">${range(item.data.start)}${item.saved ? ' · ' + esc(dateLabel(item.saved)) : ''}</option>`).join('');
-  $('history').innerHTML = '<option value="">Vybrať z histórie</option>' + options;
   $('load-last').disabled = !cache.history.length;
+  renderArchive();
+  if (!$('archive').hidden) renderPreview();
   renderDatabase();
 }
 function priceLabel(raw) {
@@ -353,7 +409,9 @@ function fitPaper() {
   frame.style.height = paper.offsetHeight * scale + 'px';
 }
 function renderPreview() {
-  const cards = week.days.map((day, i) => renderDay(day, i, week.start));
+  const saved = $('archive').hidden ? null : cache.history.find(item => item.data.start === archiveStart);
+  const previewWeek = saved?.data || week;
+  const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start));
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
     clean(settings.dic) && 'DIČ ' + clean(settings.dic), clean(settings.icdph) && 'IČ DPH ' + clean(settings.icdph),
@@ -364,7 +422,7 @@ function renderPreview() {
   const note = clean(settings.footer);
   $('paper').innerHTML = `<div class="paper-inner"><header class="paper-header">
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
-    <h2>${esc(settings.title)}</h2><div class="paper-range"><span>${range(week.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
+    <h2>${esc(settings.title)}</h2><div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
     ${contact.length || order.length || orderInfo || note ? `<footer class="paper-footer">
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
@@ -384,16 +442,16 @@ function collectWeek() {
 }
 function saveWeek() {
   stage({ entries: collectWeek(), history: [{ id: identifier(), saved: new Date().toISOString(), data: clone(week) }] });
+  updateDrafts(drafts => { delete drafts[week.start]; });
+  archiveStart = week.start;
   setWeek(week);
-  notify(token ? 'Týždeň je uložený v prehliadači. Prebieha synchronizácia s GitHubom.' : 'Týždeň je uložený v tomto prehliadači. Na zdieľanie pripoj GitHub.');
+  renderArchive();
+  notify(token ? 'Týždeň je v archíve. Prebieha synchronizácia s GitHubom.' : 'Týždeň je v archíve v tomto prehliadači.');
 }
-function canReplace() {
-  return !draftDirty || confirm('Nahradiť rozpracované menu? Zmeny ešte nie sú v histórii.');
-}
-function loadWeek(item) {
-  if (!item || !canReplace()) return;
-  setWeek(item.data);
-  notify('Načítaný týždeň ' + range(week.start) + '.');
+function showSavedWeek(item) {
+  if (!item) return;
+  archiveStart = item.data.start;
+  openView('archive');
 }
 function warnings() {
   return week.days.flatMap((day, i) => {
@@ -534,10 +592,13 @@ function openView(view) {
     if (active) button.setAttribute('aria-current', 'page');
     else button.removeAttribute('aria-current');
   }
+  $('save').hidden = view === 'archive';
+  if (view === 'archive') renderArchive();
+  renderPreview();
   document.querySelector('.work-area').scrollTop = 0;
 }
 function backup() {
-  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, history: cache.history, settings }, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, history: cache.history, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = 'u-mastina-tyzden-zaloha.json';
@@ -551,9 +612,18 @@ async function importBackup(event) {
   try {
     const incoming = JSON.parse(await file.text());
     if (!Array.isArray(incoming?.data?.days) || incoming.data.days.length !== 5) throw new Error('Záloha musí obsahovať päť dní.');
-    if (!canReplace()) return;
+    const imported = normalizeWeek(incoming.data);
+    const localDrafts = read(keys.drafts, {});
+    if (localDrafts[imported.start] && !confirm('Nahradiť rozpracované menu pre ' + range(imported.start) + ' touto zálohou?')) return;
     stage({ entries: incoming.library, history: normalizeHistory(incoming.history) });
-    setWeek(incoming.data);
+    updateDrafts(drafts => {
+      for (const draft of Object.values(incoming.drafts || {})) {
+        if (!Array.isArray(draft?.days) || draft.days.length !== 5) continue;
+        const normalized = normalizeWeek(draft);
+        drafts[normalized.start] ??= normalized;
+      }
+    });
+    setWeek(imported, true);
     if (incoming.settings) {
       for (const key of Object.keys(defaults)) {
         if (typeof incoming.settings[key] === 'string') settings[key] = incoming.settings[key];
@@ -714,6 +784,7 @@ if (kitchenMode) {
   renderEditor();
   renderPreview();
   renderSettings();
+  renderDraftStatus();
   refreshLists();
   syncLabels(token ? 'Pripojené ku GitHubu' : 'Lokálne ukladanie');
   new ResizeObserver(fitPaper).observe(document.querySelector('.preview-pane'));
@@ -736,26 +807,24 @@ if (kitchenMode) {
     button.onclick = () => openView(button.dataset.view);
   });
   $('start').onchange = event => {
-    if (event.target.value) {
-      week.start = monday(event.target.value);
-      markDraft();
-    }
-    renderEditor();
+    if (event.target.value) openWeek(monday(event.target.value));
+    else renderEditor();
   };
   $('save').onclick = saveWeek;
-  $('load-last').onclick = () => loadWeek(cache.history[0]);
-  $('history').onchange = event => {
-    loadWeek(cache.history.find(item => item.id === event.target.value));
-    event.target.value = '';
+  $('load-last').onclick = () => showSavedWeek(cache.history[0]);
+  $('archive-week').onchange = event => {
+    archiveStart = event.target.value;
+    renderArchive();
+    renderPreview();
+    $('archive-week').focus();
   };
-  $('new-week').onclick = () => {
-    if (!canReplace()) return;
-    dayIndex = 0;
-    setWeek(emptyWeek(iso(dateAt(week.start, 7))));
-    openView('editor');
+  $('archive').onclick = event => {
+    const button = event.target.closest('[data-open-week]');
+    if (button) openWeek(button.dataset.openWeek);
   };
+  $('new-week').onclick = () => openWeek(iso(dateAt(week.start, 7)));
   $('print').onclick = () => {
-    const issues = warnings();
+    const issues = $('archive').hidden ? warnings() : [];
     if (!issues.length || confirm(issues.join('\n') + '\n\nVytlačiť aj tak?')) window.print();
   };
   $('category-tabs').onclick = event => {
@@ -858,9 +927,11 @@ if (kitchenMode) {
     $('github-dialog').close();
   };
   window.addEventListener('storage', event => {
-    if (event.key !== keys.state) return;
-    cache = read(keys.state, initialState).data;
-    refreshLists();
+    if (event.key === keys.drafts) renderArchive();
+    if (event.key === keys.state) {
+      cache = read(keys.state, initialState).data;
+      refreshLists();
+    }
   });
   window.addEventListener('online', () => { if (token) sync().catch(showSyncError); });
   window.addEventListener('focus', () => { if (token) sync().catch(showSyncError); });

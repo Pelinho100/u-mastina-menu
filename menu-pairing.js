@@ -30,7 +30,7 @@ const menuPairing = (() => {
     const pair = await generateKeys();
     const offer = { id: random(16), publicCode: await publicCode(pair), privateKey: pair.privateKey, expires: Date.now() + lifetime };
     const link = new URL('tyzdenne-menu.html', url);
-    link.search = '?v=7';
+    link.search = '?v=8';
     link.hash = 'pripojit=' + [offer.id, offer.publicCode, offer.expires].join('.');
     return { offer, link: link.href };
   }

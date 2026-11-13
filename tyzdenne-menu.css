@@ -42,3 +42,14 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 .paper-contact{padding:3px 0 0;font-size:11px}
 .paper-note{font-size:11px;font-style:italic}
 @media(max-width:650px){.settings-fields{grid-template-columns:1fr}}
+
+.draft-status{font-size:12px;margin-top:4px}
+.draft-status.draft-active{color:var(--green);font-weight:650}
+#archive-week{margin:5px 0 8px}
+#archive-details>p{margin:5px 0}
+.archive-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:8px 0}
+.archive-days{display:grid;gap:8px}
+.archive-drafts h2{font-size:16px;margin-bottom:3px}
+.archive-drafts .archive-actions{border-top:1px solid var(--line);padding:6px 0 0}
+#draft-list>p{margin-top:5px}
+@media(max-width:650px){.sidebar nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
