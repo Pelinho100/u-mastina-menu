@@ -285,6 +285,11 @@
     "sides:ryza": [],
     "soups:kuraci vyvar": [
       9
+    ],
+    "dishes:vyprazany syr": [
+      1,
+      3,
+      7
     ]
   }
 }
