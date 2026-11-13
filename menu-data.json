@@ -262,5 +262,10 @@
         ]
       }
     }
-  ]
+  ],
+  "allergenProfiles": {
+    "soups:rajcinova so syrom": [
+      7
+    ]
+  }
 }
