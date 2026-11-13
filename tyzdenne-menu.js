@@ -843,7 +843,7 @@ if (kitchenMode) {
     kitchenSelection = event.target.value;
     renderKitchen();
   };
-  $('kitchen-print').onclick = () => window.print();
+  $('kitchen-print').onclick = () => menuPrint.open([...$('kitchen-days').querySelectorAll('.kitchen-day')], true);
   $('kitchen-refresh').onclick = refreshKitchen;
   window.addEventListener('storage', event => {
     if (event.key === keys.state) {
@@ -906,7 +906,7 @@ if (kitchenMode) {
   $('new-week').onclick = () => openWeek(iso(dateAt(week.start, 7)));
   $('print').onclick = () => {
     const issues = $('archive').hidden ? warnings() : [];
-    if (!issues.length || confirm(issues.join('\n') + '\n\nVytlačiť aj tak?')) window.print();
+    if (!issues.length || confirm(issues.join('\n') + '\n\nVytlačiť aj tak?')) menuPrint.open([$('paper')]);
   };
   $('category-tabs').onclick = event => {
     const button = event.target.closest('[data-category]');
