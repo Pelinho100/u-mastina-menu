@@ -380,7 +380,7 @@ function renderDay(day, i, start, kitchen = false) {
   const heading = kitchen ? 'h2' : 'h3';
   const renderRows = (items, meals) => items.filter(item => clean(item.name)).map((item, row) => {
     const sides = list(item.sides).map(clean).filter(Boolean);
-    return `<div class="print-row"><strong>${meals ? row + 1 + '. ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}</div>`;
+    return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}</div>`;
   }).join('');
   const soups = renderRows(day.soups, false);
   const meals = renderRows(day.meals, true);
@@ -395,7 +395,7 @@ function fitPaper() {
   const inner = paper.firstElementChild;
   if (!frame.clientWidth || !inner) return;
   const size = getComputedStyle(paper);
-  const available = paper.clientHeight - parseFloat(size.paddingTop) - parseFloat(size.paddingBottom) - 1;
+  const available = paper.clientHeight - parseFloat(size.paddingTop) - parseFloat(size.paddingBottom) - 2;
   inner.style.transform = '';
   inner.style.width = '100%';
   let fit = Math.min(1, available / inner.offsetHeight);
@@ -421,6 +421,7 @@ function renderPreview() {
   const orderInfo = clean(settings.orderinfo);
   const note = clean(settings.footer);
   $('paper').innerHTML = `<div class="paper-inner"><header class="paper-header">
+    <div class="paper-ornament" aria-hidden="true"><span></span></div>
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
     <h2>${esc(settings.title)}</h2><div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
