@@ -26,7 +26,7 @@ jobs:
           import json, os
           print(json.dumps({
             "app_id": os.environ["ONESIGNAL_APP_ID"],
-            "included_segments": ["Subscribed Users"],
+            "included_segments": ["Total Subscriptions"],
             "headings": {"en": "U Mastina – nové obedové menu"},
             "contents": {"en": "Nové týždenné obedové menu je zverejnené! Pozrite si, čo sme pre vás pripravili. 🍽️"},
             "url": "https://pelinho100.github.io/u-mastina-menu/obedove-menu.html"
@@ -36,4 +36,13 @@ jobs:
             -X POST https://api.onesignal.com/notifications \
             -H "Authorization: Key $ONESIGNAL_REST_API_KEY" \
             -H "Content-Type: application/json" \
-            --data-binary @/tmp/mastina-push.json
+            --data-binary @/tmp/mastina-push.json > /tmp/mastina-push-response.json
+          python3 - <<'PY'
+          import json, sys
+          with open("/tmp/mastina-push-response.json") as f:
+            response = json.load(f)
+          print(json.dumps(response, ensure_ascii=False))
+          if response.get("errors") or not response.get("id"):
+            print("::error::OneSignal nepotvrdil vytvorenie push spravy")
+            sys.exit(1)
+          PY
