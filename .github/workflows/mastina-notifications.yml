@@ -1,0 +1,39 @@
+name: U Mastina - upozornenie na nove menu
+on:
+  repository_dispatch:
+    types: [mastina-new-menu]
+permissions:
+  contents: read
+concurrency:
+  group: mastina-notify-${{ github.event.client_payload.week }}
+  cancel-in-progress: false
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Odoslat push cez OneSignal
+        env:
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+          ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
+          WEEK: ${{ github.event.client_payload.week }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ONESIGNAL_APP_ID" ] || [ -z "$ONESIGNAL_REST_API_KEY" ]; then
+            echo "::error::Nastav GitHub Secrets ONESIGNAL_APP_ID a ONESIGNAL_REST_API_KEY"
+            exit 1
+          fi
+          python3 - <<'PY' > /tmp/mastina-push.json
+          import json, os
+          print(json.dumps({
+            "app_id": os.environ["ONESIGNAL_APP_ID"],
+            "included_segments": ["Subscribed Users"],
+            "headings": {"en": "U Mastina – nové obedové menu"},
+            "contents": {"en": "Nové týždenné obedové menu je zverejnené! Pozrite si, čo sme pre vás pripravili. 🍽️"},
+            "url": "https://pelinho100.github.io/u-mastina-menu/tyzdenne-menu.html?view=host"
+          }, ensure_ascii=False))
+          PY
+          curl --fail-with-body --show-error --silent --retry 2 \
+            -X POST https://api.onesignal.com/notifications \
+            -H "Authorization: Key $ONESIGNAL_REST_API_KEY" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/mastina-push.json
