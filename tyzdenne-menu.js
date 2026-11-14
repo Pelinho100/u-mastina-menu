@@ -111,6 +111,10 @@ function displayAllergens(item, kind, archived) {
   if (archived && Array.isArray(item.allergens)) return { codes: item.allergens, pending: false };
   return allergenReview(item, kind);
 }
+function allergenLabel({ codes, pending }) {
+  if (pending) return codes.length ? 'Odhad: ' + codes.join(', ') : 'Alergény: neurčené';
+  return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
+}
 function allergenButton(kind, index) {
   return `<button type="button" class="secondary allergen-button" data-allergens="${kind}.${index}" aria-haspopup="dialog">Alergény</button>`;
 }
@@ -120,8 +124,10 @@ function updateAllergenButtons() {
     const item = week.days[dayIndex][kind][index];
     const review = allergenReview(item, kind === 'meals' ? 'dishes' : 'soups');
     button.hidden = !clean(item.name);
-    button.textContent = review.pending ? 'Návrh alergénov' + (review.codes.length ? ' · ' + review.codes.join(', ') : '')
-      : 'Alergény overené' + (review.codes.length ? ' · ' + review.codes.join(', ') : '');
+    button.textContent = review.pending && review.codes.length
+      ? 'Odhad alergénov: ' + review.codes.join(', ')
+      : allergenLabel(review);
+    button.setAttribute('aria-label', item.name + ' · ' + button.textContent + ' · upraviť alergény');
   }
 }
 function openAllergens(path) {
@@ -131,13 +137,17 @@ function openAllergens(path) {
   const components = [...new Map(allergenComponents(item, kind === 'meals' ? 'dishes' : 'soups')
     .map(component => [component.key, component])).values()];
   $('allergen-title').textContent = 'Alergény – ' + item.name;
-  $('allergen-fields').innerHTML = components.map((component, componentIndex) => `
+  $('allergen-fields').innerHTML = components.map((component, componentIndex) => {
+    const extraHints = suggestedAllergens(component.name).filter(code => !component.codes.includes(code));
+    return `
     <fieldset><legend>${esc(component.name)}</legend>
       <p class="muted">${component.confirmed !== undefined ? 'Uložené podľa receptúry' : 'Návrh podľa názvu. Skontroluj receptúru a etikety.'}</p>
+      ${extraHints.length ? '<p class="muted">Podľa názvu ešte skontroluj: ' + extraHints.join(', ') + '.</p>' : ''}
       <div class="allergen-options">${allergenNames.map((name, i) =>
         `<label><input type="checkbox" name="component-${componentIndex}" value="${i + 1}" ${component.codes.includes(i + 1) ? 'checked' : ''}> ${i + 1}. ${name}</label>`
       ).join('')}</div>
-    </fieldset>`).join('');
+    </fieldset>`;
+  }).join('');
   $('allergen-confirm').checked = false;
   $('allergen-form').onsubmit = event => {
     event.preventDefault();
@@ -558,10 +568,8 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
     const sides = list(item.sides).map(clean).filter(Boolean);
     let allergens = '';
     if (!kitchen) {
-      const { codes, pending } = displayAllergens(item, meals ? 'dishes' : 'soups', archived);
-      const label = pending ? (codes.length ? 'Odhad: ' + codes.join(', ') : 'Alergény neurčené')
-        : codes.length ? 'Obsahuje: ' + codes.join(', ') : '';
-      if (label) allergens = '<div class="print-allergens">' + label + '</div>';
+      const review = displayAllergens(item, meals ? 'dishes' : 'soups', archived);
+      allergens = '<div class="print-allergens">' + allergenLabel(review) + '</div>';
     }
     return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}${allergens}</div>`;
   }).join('');
