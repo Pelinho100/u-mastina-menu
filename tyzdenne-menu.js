@@ -133,10 +133,11 @@ function displayAllergens(item, kind, archived) {
   if (extra.length) return { ...review, extra };
   return review;
 }
-function allergenLabel({ codes, pending, extra = [] }) {
+function allergenLabel({ codes, pending, extra = [] }, forGuests = false) {
   if (pending) {
     const estimate = allergenCodes([...codes, ...extra]);
-    return estimate.length ? 'Alergény: ' + estimate.join(', ') + ' *' : 'Doplniť podľa receptúry';
+    if (estimate.length) return 'Alergény: ' + estimate.join(', ') + ' *';
+    return forGuests ? '' : 'Doplniť podľa receptúry';
   }
   if (extra.length) return 'Alergény: ' + allergenCodes([...codes, ...extra])
     .map(code => code + (extra.includes(code) ? '*' : '')).join(', ');
@@ -602,7 +603,8 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
     let allergens = '';
     if (!kitchen) {
       const review = displayAllergens(item, meals ? 'dishes' : 'soups', archived);
-      allergens = '<div class="print-allergens">' + allergenLabel(review) + '</div>';
+      const label = allergenLabel(review, true);
+      if (label) allergens = '<div class="print-allergens">' + label + '</div>';
     }
     return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}${allergens}</div>`;
   }).join('');
@@ -643,10 +645,10 @@ function renderPreview() {
     ...day.soups.map(item => [item, 'soups']),
     ...day.meals.map(item => [item, 'dishes'])
   ]).filter(([item]) => clean(item.name));
-  const pending = entries.some(([item, kind]) => {
-    const review = displayAllergens(item, kind, Boolean(saved));
-    return review.pending || review.extra?.length;
-  });
+  const reviews = entries.map(([item, kind]) => displayAllergens(item, kind, Boolean(saved)));
+  const pending = reviews.some(review => review.pending || review.extra?.length);
+  const automatic = reviews.some(review => (review.pending && review.codes.length) || review.extra?.length);
+  const missing = reviews.some(review => !allergenLabel(review, true));
   $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
@@ -664,7 +666,8 @@ function renderPreview() {
     <div class="paper-days">${cards.join('')}</div>
     ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer">
       ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
-      ${pending ? '<p class="allergen-legend">* Automaticky podľa názvu. Presné údaje určuje receptúra.</p>' : ''}
+      ${automatic ? '<p class="allergen-legend">* Automaticky podľa názvu. Presné údaje určuje receptúra.</p>' : ''}
+      ${missing ? '<p class="allergen-legend">Pri položkách bez riadka s alergénmi údaje chýbajú.</p>' : ''}
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
         ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
         ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
