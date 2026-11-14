@@ -633,7 +633,7 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
   const soups = renderRows(day.soups, false);
   const meals = renderRows(day.meals, true);
   return `<section class="${kitchen ? 'kitchen-day' : 'print-day'}"><${heading}><span>${days[i]}</span><time datetime="${iso(dateAt(start, i))}">${formatDate(start, i)}</time></${heading}>
-    ${soups ? '<div class="print-group print-soups"><h4>Polievky</h4>' + soups + '</div>' : ''}
+    ${soups ? '<div class="print-group print-soups"><h4>Polievka</h4>' + soups + '</div>' : ''}
     ${meals ? '<div class="print-group print-meals"><h4>Hlavné jedlá</h4>' + meals + '</div>' : ''}
     ${soups || meals ? '' : '<p class="empty-print">Menu zatiaľ nie je vyplnené.</p>'}</section>`;
 }
