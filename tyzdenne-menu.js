@@ -829,7 +829,7 @@ function collectWeek() {
     sides: week.days.flatMap(day => day.meals.filter(meal => clean(meal.name)).flatMap(meal => meal.sides))
   };
 }
-function saveWeek(publish) {
+function saveWeek(publish, sendNotification = false) {
   const latest = archiveHistory();
   const moved = originalWeekStart !== week.start;
   if (moved && latest.some(item => item.data.start === week.start)) {
@@ -850,7 +850,7 @@ function saveWeek(publish) {
   }
   const saved = { id: identifier(), saved: new Date().toISOString(), data: savedWeek };
   if (publish) {
-    stage({ entries: collectWeek(), replacedHistoryIds, history: [saved], publishWeek: true });
+    stage({ entries: collectWeek(), replacedHistoryIds, history: [saved], publishWeek: true, sendNotification });
   } else {
     stage(null, saved);
   }
@@ -1035,7 +1035,8 @@ async function syncWork(auth, verifyWrite) {
     const pending = read(keys.state, initialState).queue;
     if (pending.length || mustVerify) {
       const previousDates = new Set(remote.data.history.map(item => item.data.start));
-      const publication = pending.filter(op => op.publishWeek).at(-1)?.history[0];
+      const publicationOp = pending.filter(op => op.publishWeek).at(-1);
+      const publication = publicationOp?.history[0];
       for (const op of pending) {
         if (op.deleteWeek && publishedMenuStart(remote.data) === op.deleteWeek) deletionBlocked = true;
         applyOperation(remote.data, op);
@@ -1052,7 +1053,7 @@ async function syncWork(auth, verifyWrite) {
       }
       mustVerify = false;
       publishedWeek ||= Boolean(publication);
-      if (publication) {
+      if (publication && publicationOp.sendNotification) {
         notificationFailed = !(await dispatchMenuNotification(auth, publication.data.start));
       }
     }
@@ -1075,7 +1076,7 @@ async function syncWork(auth, verifyWrite) {
       syncLabels(publishedWeek ? 'Zverejnené na GitHube.' : 'Údaje sú synchronizované s GitHubom.');
       if (deletionBlocked) notify('Týždeň je zverejnený na webe. Vymazanie sa nevykonalo.', true);
       else if (notificationFailed) notify('Menu je na webe, ale upozornenie zlyhalo: ' + (window.menuNotificationError || 'Neznáma chyba'), true);
-      else if (publishedWeek) notify('Menu je zverejnené. Požiadavka na upozornenie bola prijatá GitHubom; doručenie over v GitHub Actions a OneSignal.');
+      else if (publishedWeek) notify(publicationOp?.sendNotification ? 'Menu je zverejnené. Požiadavka na upozornenie bola odoslaná.' : 'Menu je zverejnené bez upozornenia.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
     }
@@ -1404,7 +1405,10 @@ if (guestMode) {
   $('save-week-form').onsubmit = event => {
     event.preventDefault();
     $('save-week-dialog').close();
-    if (event.submitter) saveWeek(event.submitter.value === 'publish');
+    if (event.submitter) {
+      const choice = event.submitter.value;
+      saveWeek(choice !== 'local', choice === 'publish-notify');
+    }
   };
   $('facebook-export').onclick = async () => {
     const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
