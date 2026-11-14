@@ -82,6 +82,8 @@ const menuPrint = (() => {
       y += 18;
       y = label(header.querySelector('.restaurant')?.textContent, width / 2, y, width, 11, 'Georgia', 'bold', 'center') + 3;
       y = label(header.querySelector('h2').textContent, width / 2, y, width, 38, 'Georgia', '', 'center') + 3;
+      const marker = header.querySelector('.allergen-draft')?.textContent;
+      if (marker) y = label(marker, width / 2, y, width, 10, 'Arial', 'bold', 'center') + 5;
       y = label(Array.from(header.querySelectorAll('.paper-range span'), item => item.textContent).join('  ·  '), width / 2, y, width, 10, 'Arial', 'bold', 'center') + 15;
     }
     const days = kitchen ? [section] : section.querySelectorAll('.print-day');

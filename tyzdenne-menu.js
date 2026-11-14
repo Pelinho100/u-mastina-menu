@@ -63,14 +63,14 @@ const allergenNames = [
   'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
 ];
 const allergenHints = [
-  [/\b(vyprazan\w* syr\w*|trojobal\w*|obalovan\w*|ciernohorsk\w* rezen)\b/, [1, 3]],
-  [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*)\b/, [1]],
+  [/\b(vyprazan\w*|trojobal\w*|obalovan\w*|ciernohorsk\w* rezen|(?:cordon|gordon) (?:bleu|blue))\b/, [1, 3]],
+  [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*|pizz\w*|panin\w*)\b/, [1]],
   [/\b(vajc\w*|vajec\w*|majonez\w*)\b/, [3]],
   [/\b(ryb\w*|heik\w*|losos\w*|tuniak\w*|tresk\w*|pstruh\w*)\b/, [4]],
   [/\b(krevet\w*|krab\w*|homar\w*)\b/, [2]],
   [/\b(arasid\w*|burak\w*)\b/, [5]],
   [/\b(soj\w*|tofu)\b/, [6]],
-  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*)\b/, [7]],
+  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*|eidam\w*|mozzarell\w*|parmezan\w*|zemiakov\w* kas\w*|(?:cordon|gordon) (?:bleu|blue))\b/, [7]],
   [/\b(orech\w*|mandl\w*|pistaci\w*|kesu)\b/, [8]],
   [/\b(zeler\w*|vyvar\w*|bujon\w*)\b/, [9]],
   [/\b(horcic\w*)\b/, [10]],
@@ -107,15 +107,9 @@ function allergenReview(item, kind) {
     pending: components.some(component => component.confirmed === undefined)
   };
 }
-function weekAllergens(menu, archived) {
-  return menu.days.flatMap((day, i) =>
-    [['soups', day.soups], ['dishes', day.meals]].flatMap(([kind, entries]) =>
-      entries.filter(item => clean(item.name)).map(item => ({
-        name: clean(item.name), day: days[i],
-        pending: archived ? !Array.isArray(item.allergens) : allergenReview(item, kind).pending
-      }))
-    )
-  );
+function displayAllergens(item, kind, archived) {
+  if (archived && Array.isArray(item.allergens)) return { codes: item.allergens, pending: false };
+  return allergenReview(item, kind);
 }
 function allergenButton(kind, index) {
   return `<button type="button" class="secondary allergen-button" data-allergens="${kind}.${index}" aria-haspopup="dialog">Alergény</button>`;
@@ -126,7 +120,7 @@ function updateAllergenButtons() {
     const item = week.days[dayIndex][kind][index];
     const review = allergenReview(item, kind === 'meals' ? 'dishes' : 'soups');
     button.hidden = !clean(item.name);
-    button.textContent = review.pending ? 'Alergény na kontrolu' + (review.codes.length ? ' · ' + review.codes.join(', ') : '')
+    button.textContent = review.pending ? 'Návrh alergénov' + (review.codes.length ? ' · ' + review.codes.join(', ') : '')
       : 'Alergény overené' + (review.codes.length ? ' · ' + review.codes.join(', ') : '');
   }
 }
@@ -562,9 +556,13 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
   const heading = kitchen ? 'h2' : 'h3';
   const renderRows = (items, meals) => items.filter(item => clean(item.name)).map((item, row) => {
     const sides = list(item.sides).map(clean).filter(Boolean);
-    const review = kitchen || archived ? null : allergenReview(item, meals ? 'dishes' : 'soups');
-    const codes = review ? (review.pending ? null : review.codes) : item.allergens;
-    const allergens = !kitchen && codes?.length ? '<div class="print-allergens">Obsahuje: ' + codes.join(', ') + '</div>' : '';
+    let allergens = '';
+    if (!kitchen) {
+      const { codes, pending } = displayAllergens(item, meals ? 'dishes' : 'soups', archived);
+      const label = pending ? (codes.length ? 'Odhad: ' + codes.join(', ') : 'Alergény neurčené')
+        : codes.length ? 'Obsahuje: ' + codes.join(', ') : '';
+      if (label) allergens = '<div class="print-allergens">' + label + '</div>';
+    }
     return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}${allergens}</div>`;
   }).join('');
   const soups = renderRows(day.soups, false);
@@ -600,13 +598,12 @@ function renderPreview() {
   const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
   const previewWeek = saved?.data || week;
   const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start, false, Boolean(saved)));
-  const entries = weekAllergens(previewWeek, Boolean(saved));
-  const pending = entries.filter(item => item.pending);
-  $('allergen-print-status').hidden = !pending.length;
-  $('allergen-print-status').textContent = pending.length
-    ? 'Pred tlačou over alergény v editore (' + pending.length + ' položiek).' + (saved ? ' Potom týždeň znovu ulož.' : '')
-    : '';
-  document.body.classList.toggle('allergens-pending', Boolean(pending.length));
+  const entries = previewWeek.days.flatMap(day => [
+    ...day.soups.map(item => [item, 'soups']),
+    ...day.meals.map(item => [item, 'dishes'])
+  ]).filter(([item]) => clean(item.name));
+  const pending = entries.some(([item, kind]) => displayAllergens(item, kind, Boolean(saved)).pending);
+  $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
     clean(settings.dic) && 'DIČ ' + clean(settings.dic), clean(settings.icdph) && 'IČ DPH ' + clean(settings.icdph),
@@ -618,7 +615,9 @@ function renderPreview() {
   $('paper').innerHTML = `<div class="paper-inner"><header class="paper-header">
     <div class="paper-ornament" aria-hidden="true"><span></span></div>
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
-    <h2>${esc(settings.title)}</h2><div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
+    <h2>${esc(settings.title)}</h2>
+    ${pending ? '<p class="allergen-draft">PRACOVNÝ NÁHĽAD · odhady alergénov podľa názvu</p>' : ''}
+    <div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
     ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer">
       ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
@@ -1071,13 +1070,6 @@ if (kitchenMode) {
   };
   $('new-week').onclick = () => openWeek(iso(dateAt(week.start, 7)));
   $('print').onclick = () => {
-    const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
-    const pending = weekAllergens(saved?.data || week, Boolean(saved)).filter(item => item.pending);
-    if (pending.length) {
-      alert('Pred tlačou over alergény:\n' + pending.map(item => item.day + ' · ' + item.name).join('\n') +
-        (saved ? '\n\nOtvor týždeň v editore a po overení ho znovu ulož.' : ''));
-      return;
-    }
     const issues = $('archive').hidden ? warnings() : [];
     if (!issues.length || confirm(issues.join('\n') + '\n\nVytlačiť aj tak?')) menuPrint.open([$('paper')]);
   };
