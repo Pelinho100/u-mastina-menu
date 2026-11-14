@@ -14,28 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 -m pip install --quiet pillow cairosvg
-      - name: Generate iOS and Android PNG icons
-        run: |
-          python3 - <<'PY'
-          from PIL import Image, ImageDraw, ImageFont
-          font='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
-          for kind,subtitle in [('editor','EDITOR'),('menu','OBEDOVÉ MENU')]:
-            for size in (180,192,512):
-              im=Image.new('RGB',(size,size),'#103c2e')
-              d=ImageDraw.Draw(im)
-              k=size/512
-              gold='#d9b45f'
-              d.rounded_rectangle((int(18*k),int(18*k),int(494*k),int(494*k)),radius=int(95*k),outline=gold,width=max(2,int(13*k)))
-              d.arc((int(155*k),int(70*k),int(270*k),int(205*k)),180,355,fill=gold,width=max(2,int(13*k)))
-              d.arc((int(220*k),int(45*k),int(355*k),int(205*k)),175,365,fill=gold,width=max(2,int(13*k)))
-              d.arc((int(305*k),int(70*k),int(420*k),int(205*k)),185,355,fill=gold,width=max(2,int(13*k)))
-              d.line([(int(168*k),int(182*k)),(int(173*k),int(233*k)),(int(352*k),int(233*k)),(int(357*k),int(182*k))],fill=gold,width=max(2,int(11*k)))
-              f=ImageFont.truetype(font,int(155*k))
-              d.text((int(256*k),int(326*k)),'UM',font=f,anchor='mm',fill='#fff8e9')
-              sf=ImageFont.truetype(font,int((46 if kind=='editor' else 37)*k))
-              d.text((int(256*k),int(425*k)),subtitle,font=sf,anchor='mm',fill=gold)
-              im.save(f'mastina-{kind}-{size}.png',optimize=True)
-          PY
       - name: Render premium icons from SVG
         run: |
           python3 - <<'PY'
