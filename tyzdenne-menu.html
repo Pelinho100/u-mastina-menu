@@ -16,7 +16,7 @@
 <script defer src="menu-pairing.js?v=8"></script>
 <script defer src="menu-print.js?v=29"></script>
 <script defer src="menu-allergen-catalog.js?v=1"></script>
-<script defer src="tyzdenne-menu.js?v=31"></script>
+<script defer src="tyzdenne-menu.js?v=33"></script>
 </head>
 <body>
 <header class="app-header">
@@ -97,6 +97,14 @@
   <p id="kitchen-status" role="status" hidden></p>
   <div id="kitchen-days"></div>
 </main>
+<dialog id="save-week-dialog" aria-labelledby="save-week-title">
+  <div class="dialog-title"><h2 id="save-week-title">Uložiť týždeň</h2><button type="button" class="icon secondary" data-close="save-week-dialog" aria-label="Zrušiť">×</button></div>
+  <p>Chceš menu synchronizovať s GitHubom a zverejniť ho pre hostí cez QR kód a uloženú záložku?</p>
+  <form id="save-week-form" class="settings-actions">
+    <button type="submit" value="publish" class="primary">Uložiť a zverejniť</button>
+    <button type="submit" value="local" class="secondary" autofocus>Uložiť iba v tomto zariadení</button>
+  </form>
+</dialog>
 <dialog id="allergen-dialog">
   <div class="dialog-title"><h2 id="allergen-title">Alergény</h2><button type="button" class="icon secondary" data-close="allergen-dialog" aria-label="Zavrieť alergény">×</button></div>
   <form id="allergen-form">

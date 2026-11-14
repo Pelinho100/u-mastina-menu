@@ -306,7 +306,7 @@ function legacyState() {
 }
 const initialState = guestMode ? { data: emptyData() } : read(keys.state, null) || legacyState();
 let cache = initialState.data;
-let week = guestMode ? emptyWeek() : normalizeWeek(read(keys.draft, null) || read(keys.old, null) || cache.history[0]?.data || emptyWeek());
+let week = guestMode ? emptyWeek() : normalizeWeek(read(keys.draft, null) || read(keys.old, null) || archiveHistoryAtStart(initialState)[0]?.data || emptyWeek());
 function normalizeSettings(value) {
   return Object.fromEntries(Object.keys(defaults).filter(key => typeof value?.[key] === 'string')
     .map(key => [key, value[key].slice(0, 150)]));
@@ -348,14 +348,24 @@ function writeState(value) {
   cache = value.data;
 }
 if (!guestMode && !read(keys.state, null)) writeState(initialState);
-function stage(operation) {
+function stage(operation, localWeek = null) {
   const state = read(keys.state, initialState);
-  const entry = { id: identifier(), ...operation };
-  applyOperation(state.data, entry);
-  state.queue.push(entry);
+  if (localWeek) {
+    state.localHistory = list(state.localHistory).filter(item => item.data.start !== localWeek.data.start &&
+      item.data.start !== originalWeekStart);
+    addHistory({ history: state.localHistory }, [localWeek]);
+  } else {
+    const entry = { id: identifier(), ...operation };
+    applyOperation(state.data, entry);
+    state.queue.push(entry);
+    if (entry.publishWeek) {
+      state.localHistory = list(state.localHistory).filter(item => item.data.start !== originalWeekStart &&
+        item.data.start !== entry.history[0].data.start);
+    }
+  }
   writeState(state);
   refreshLists();
-  if (token) sync().catch(showSyncError);
+  if (token && !localWeek) sync().catch(showSyncError);
 }
 function updateDrafts(change) {
   const drafts = read(keys.drafts, {});
@@ -559,10 +569,15 @@ function dateLabel(saved) {
   const parsed = /^\d{4}-\d\d-\d\dT/.test(saved) && new Date(saved);
   return parsed && !Number.isNaN(+parsed) ? parsed.toLocaleString('sk-SK') : saved;
 }
+function archiveHistoryAtStart(state) {
+  const combined = { history: [...state.data.history] };
+  addHistory(combined, list(state.localHistory));
+  return combined.history;
+}
 function archiveHistory() {
-  if (!sharedArchive.length) return cache.history;
-  const combined = { history: [...cache.history] };
-  const replaced = new Set(read(keys.state, initialState).queue.flatMap(op => op.replacedHistoryIds || []));
+  const state = read(keys.state, initialState);
+  const combined = { history: archiveHistoryAtStart(state) };
+  const replaced = new Set(state.queue.flatMap(op => op.replacedHistoryIds || []));
   addHistory(combined, sharedArchive.filter(item => !replaced.has(item.id)));
   return combined.history;
 }
@@ -749,7 +764,7 @@ function collectWeek() {
     sides: week.days.flatMap(day => day.meals.filter(meal => clean(meal.name)).flatMap(meal => meal.sides))
   };
 }
-function saveWeek() {
+function saveWeek(publish) {
   const latest = archiveHistory();
   const moved = originalWeekStart !== week.start;
   if (moved && latest.some(item => item.data.start === week.start)) {
@@ -768,16 +783,24 @@ function saveWeek() {
       }
     }
   }
-  stage({
-    entries: collectWeek(),
-    replacedHistoryIds,
-    history: [{ id: identifier(), saved: new Date().toISOString(), data: savedWeek }]
-  });
+  const saved = { id: identifier(), saved: new Date().toISOString(), data: savedWeek };
+  if (publish) {
+    stage({ entries: collectWeek(), replacedHistoryIds, history: [saved], publishWeek: true });
+  } else {
+    stage(null, saved);
+  }
   updateDrafts(drafts => { delete drafts[week.start]; });
   archiveStart = week.start;
   setWeek(week);
   renderArchive();
-  notify(token ? 'Týždeň je v archíve. Prebieha synchronizácia s GitHubom.' : 'Týždeň je v archíve v tomto prehliadači.');
+  if (!publish) {
+    notify('Týždeň je uložený v tomto zariadení.');
+  } else if (token) {
+    notify('Týždeň je uložený. Prebieha zverejnenie pre hostí.');
+  } else {
+    notify('Týždeň je uložený. Pripoj GitHub a menu sa zverejní.');
+    $('github-dialog').showModal();
+  }
 }
 function showSavedWeek(item) {
   if (!item) return;
@@ -802,7 +825,7 @@ function renderKitchen() {
   const items = new Map();
   const combined = emptyData();
   addHistory(combined, kitchenShared);
-  addHistory(combined, cache.history);
+  addHistory(combined, archiveHistoryAtStart(read(keys.state, initialState)));
   for (const item of combined.history) if (!items.has(item.data.start)) items.set(item.data.start, item.data);
   const requested = new URLSearchParams(location.search).get('tyzden');
   if (requested === week.start && (draftDirty || !items.has(requested))) items.set(week.start, week);
@@ -890,6 +913,7 @@ function showSyncError(error) {
 }
 async function syncWork(auth, verifyWrite) {
   let mustVerify = verifyWrite;
+  let publishedWeek = false;
   syncLabels('Synchronizujem s GitHubom…');
   for (let attempt = 0; attempt < 5; attempt++) {
     const remote = await remoteData(auth);
@@ -906,11 +930,13 @@ async function syncWork(auth, verifyWrite) {
         throw error;
       }
       mustVerify = false;
+      publishedWeek ||= pending.some(op => op.publishWeek);
     }
     const finished = new Set(pending.map(op => op.id));
-    const remaining = read(keys.state, initialState).queue.filter(op => !finished.has(op.id));
+    const state = read(keys.state, initialState);
+    const remaining = state.queue.filter(op => !finished.has(op.id));
     for (const op of remaining) applyOperation(remote.data, op);
-    writeState({ data: remote.data, queue: remaining });
+    writeState({ ...state, data: remote.data, queue: remaining });
     sharedArchive = [];
     refreshLists();
     updateAllergenButtons();
@@ -923,7 +949,8 @@ async function syncWork(auth, verifyWrite) {
     }
     if (!remaining.length) {
       syncLabels('Údaje sú synchronizované s GitHubom.');
-      if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
+      if (publishedWeek) notify('Menu je zverejnené pre hostí podľa dátumu týždňa.');
+      else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
     }
   }
@@ -954,7 +981,7 @@ function openView(view) {
   document.querySelector('.work-area').scrollTop = 0;
 }
 function backup() {
-  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, allergenProfiles: cache.allergenProfiles, allergenReviewed: cache.allergenReviewed, history: cache.history, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, allergenProfiles: cache.allergenProfiles, allergenReviewed: cache.allergenReviewed, history: cache.history, localHistory: read(keys.state, initialState).localHistory, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = 'u-mastina-tyzden-zaloha.json';
@@ -972,6 +999,11 @@ async function importBackup(event) {
     const localDrafts = read(keys.drafts, {});
     if (localDrafts[imported.start] && !confirm('Nahradiť rozpracované menu pre ' + range(imported.start) + ' touto zálohou?')) return;
     stage({ entries: incoming.library, allergenProfiles: incoming.allergenProfiles, allergenReviewed: incoming.allergenReviewed, history: normalizeHistory(incoming.history) });
+    const state = read(keys.state, initialState);
+    state.localHistory = list(state.localHistory);
+    addHistory({ history: state.localHistory }, normalizeHistory(incoming.localHistory));
+    writeState(state);
+    refreshLists();
     updateDrafts(drafts => {
       for (const draft of Object.values(incoming.drafts || {})) {
         if (!Array.isArray(draft?.days) || draft.days.length !== 5) continue;
@@ -1226,7 +1258,12 @@ if (guestMode) {
     button.onclick = () => openView(button.dataset.view);
   });
   $('start').onchange = event => changeWeekDate(event.target.value);
-  $('save').onclick = saveWeek;
+  $('save').onclick = () => $('save-week-dialog').showModal();
+  $('save-week-form').onsubmit = event => {
+    event.preventDefault();
+    $('save-week-dialog').close();
+    saveWeek(event.submitter?.value === 'publish');
+  };
   $('load-last').onclick = () => showSavedWeek(archiveHistory()[0]);
   $('archive-refresh').onclick = refreshArchive;
   $('archive-week').onchange = event => {
