@@ -136,9 +136,10 @@ function displayAllergens(item, kind, archived) {
 function allergenLabel({ codes, pending, extra = [] }) {
   if (pending) {
     const estimate = allergenCodes([...codes, ...extra]);
-    return estimate.length ? 'Odhad: ' + estimate.join(', ') : 'Doplniť podľa receptúry';
+    return estimate.length ? 'Alergény: ' + estimate.join(', ') + ' *' : 'Doplniť podľa receptúry';
   }
-  if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Odhad: ' + extra.join(', ');
+  if (extra.length) return 'Alergény: ' + allergenCodes([...codes, ...extra])
+    .map(code => code + (extra.includes(code) ? '*' : '')).join(', ');
   return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
 }
 function allergenButton(kind, index) {
@@ -659,11 +660,11 @@ function renderPreview() {
     <div class="paper-ornament" aria-hidden="true"><span></span></div>
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
     <h2>${esc(settings.title)}</h2>
-    ${pending ? '<p class="allergen-draft">PRACOVNÝ NÁHĽAD · odhady alergénov podľa názvu</p>' : ''}
     <div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
     ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer">
       ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
+      ${pending ? '<p class="allergen-legend">* Automaticky podľa názvu. Presné údaje určuje receptúra.</p>' : ''}
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
         ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
         ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
