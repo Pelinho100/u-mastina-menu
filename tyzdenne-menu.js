@@ -1027,6 +1027,7 @@ async function dispatchMenuNotification(auth, weekStart) {
 async function syncWork(auth, verifyWrite) {
   let mustVerify = verifyWrite;
   let publishedWeek = false;
+  let publishedWithNotification = false;
   let notificationFailed = false;
   let deletionBlocked = false;
   syncLabels('Synchronizujem s GitHubom…');
@@ -1053,6 +1054,7 @@ async function syncWork(auth, verifyWrite) {
       }
       mustVerify = false;
       publishedWeek ||= Boolean(publication);
+      publishedWithNotification ||= Boolean(publication && publicationOp.sendNotification);
       if (publication && publicationOp.sendNotification) {
         notificationFailed = !(await dispatchMenuNotification(auth, publication.data.start));
       }
@@ -1076,7 +1078,7 @@ async function syncWork(auth, verifyWrite) {
       syncLabels(publishedWeek ? 'Zverejnené na GitHube.' : 'Údaje sú synchronizované s GitHubom.');
       if (deletionBlocked) notify('Týždeň je zverejnený na webe. Vymazanie sa nevykonalo.', true);
       else if (notificationFailed) notify('Menu je na webe, ale upozornenie zlyhalo: ' + (window.menuNotificationError || 'Neznáma chyba'), true);
-      else if (publishedWeek) notify(publicationOp?.sendNotification ? 'Menu je zverejnené. Požiadavka na upozornenie bola odoslaná.' : 'Menu je zverejnené bez upozornenia.');
+      else if (publishedWeek) notify(publishedWithNotification ? 'Menu je zverejnené. Požiadavka na upozornenie bola odoslaná.' : 'Menu je zverejnené bez upozornenia.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
     }
