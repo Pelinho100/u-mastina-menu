@@ -27,8 +27,8 @@ jobs:
           print(json.dumps({
             "app_id": os.environ["ONESIGNAL_APP_ID"],
             "included_segments": ["Total Subscriptions"],
-            "headings": {"en": "U Mastina – nové obedové menu"},
-            "contents": {"en": "Nové týždenné obedové menu je zverejnené! Pozrite si, čo sme pre vás pripravili. 🍽️"},
+            "headings": {"en": "🍽️ Nový jedálny lístok na tento týždeň!"},
+            "contents": {"en": "Pozrite si, aké chutné obedy sme pre vás pripravili v reštaurácii U Mastina. Tešíme sa na vás! 😊"},
             "url": "https://pelinho100.github.io/u-mastina-menu/obedove-menu.html"
           }, ensure_ascii=False))
           PY
