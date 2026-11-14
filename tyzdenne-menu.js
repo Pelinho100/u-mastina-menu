@@ -279,6 +279,10 @@ function applyOperation(data, op) {
   }
   if (op.settings) data.settings = { ...data.settings, ...normalizeSettings(op.settings) };
   if (op.entries) addEntries(data.library, op.entries);
+  if (op.deleteWeek && publishedMenuStart(data) !== op.deleteWeek) {
+    const deleted = new Set(op.deleteWeekIds);
+    data.history = data.history.filter(item => !deleted.has(item.id));
+  }
   if (op.replacedHistoryIds) {
     const replaced = new Set(op.replacedHistoryIds);
     data.history = data.history.filter(item => !replaced.has(item.id));
@@ -348,7 +352,7 @@ week = normalizeWeek(initialDraft || week);
 let originalWeekStart = initialDraft?.originalWeekStart || week.start;
 let draftDirty = Boolean(initialDraft);
 let archiveStart = '';
-let sharedArchive = [];
+let sharedArchive = emptyData();
 let archiveLoading = false;
 
 function writeState(value) {
@@ -364,8 +368,11 @@ function stage(operation, localWeek = null) {
     addHistory({ history: state.localHistory }, [localWeek]);
   } else {
     const entry = { id: identifier(), ...operation };
+    if (entry.deleteWeek) {
+      state.localHistory = list(state.localHistory).filter(item => item.data.start !== entry.deleteWeek);
+    }
     applyOperation(state.data, entry);
-    state.queue.push(entry);
+    if (!entry.deleteWeek || entry.deleteWeekIds.length) state.queue.push(entry);
     if (entry.publishWeek) {
       state.localHistory = list(state.localHistory).filter(item => item.data.start !== originalWeekStart &&
         item.data.start !== entry.history[0].data.start);
@@ -373,7 +380,7 @@ function stage(operation, localWeek = null) {
   }
   writeState(state);
   refreshLists();
-  if (token && !localWeek) sync().catch(showSyncError);
+  if (token && !localWeek && (!operation.deleteWeek || operation.deleteWeekIds.length)) sync().catch(showSyncError);
 }
 function updateDrafts(change) {
   const drafts = read(keys.drafts, {});
@@ -596,8 +603,8 @@ function archiveHistoryAtStart(state) {
 function archiveHistory() {
   const state = read(keys.state, initialState);
   const combined = { history: archiveHistoryAtStart(state) };
-  const replaced = new Set(state.queue.flatMap(op => op.replacedHistoryIds || []));
-  addHistory(combined, sharedArchive.filter(item => !replaced.has(item.id)));
+  const replaced = new Set(state.queue.flatMap(op => [...list(op.replacedHistoryIds), ...list(op.deleteWeekIds)]));
+  addHistory(combined, sharedArchive.history.filter(item => !replaced.has(item.id)));
   return combined.history;
 }
 async function refreshArchive() {
@@ -608,7 +615,7 @@ async function refreshArchive() {
   $('archive-status').textContent = 'Načítavam týždne z GitHubu…';
   try {
     const { data } = await remoteData(token);
-    sharedArchive = data.history;
+    sharedArchive = data;
     $('archive-status').textContent = '';
     refreshLists();
   } catch {
@@ -635,6 +642,7 @@ function renderArchive() {
     <div class="archive-actions">
       <span class="muted">${selected.saved ? 'Uložené ' + esc(dateLabel(selected.saved)) : ''}</span>
       <button class="secondary" data-open-week="${esc(archiveStart)}">Upraviť jedálny lístok</button>
+      <button type="button" class="remove" data-delete-week="${esc(archiveStart)}">Vymazať týždeň</button>
     </div>
     <div class="archive-days">${selected.data.days.map((day, i) => renderDay(day, i, archiveStart)).join('')}</div>
   ` : '<p class="muted">Po kliknutí na „Uložiť týždeň“ sa tu zobrazí hotové menu.</p>';
@@ -642,6 +650,31 @@ function renderArchive() {
   $('draft-list').innerHTML = drafts.length ? drafts.map(start =>
     `<div class="archive-actions"><strong>${range(start)}</strong><button class="secondary" data-open-week="${esc(start)}">Pokračovať v úprave</button></div>`
   ).join('') : '<p class="muted">Žiadne rozpracované týždne.</p>';
+}
+function publishedMenuStart(data) {
+  return selectGuestWeek(data.history, undefined, data.publishedWeekId)?.data.start;
+}
+function deleteSavedWeek(start) {
+  const state = read(keys.state, initialState);
+  const shared = { history: [...state.data.history], publishedWeekId: sharedArchive.publishedWeekId || state.data.publishedWeekId };
+  addHistory(shared, sharedArchive.history);
+  const saved = archiveHistory().filter(item => item.data.start === start);
+  if (!saved.length) return;
+  const savedIds = new Set(saved.map(item => item.id));
+  const deleteWeekIds = shared.history.filter(item => savedIds.has(item.id)).map(item => item.id);
+  if (deleteWeekIds.length && publishedMenuStart(shared) === start) {
+    notify('Tento týždeň je na webe. Najprv zverejni iný jedálny lístok.', true);
+    return;
+  }
+  const scope = deleteWeekIds.length ? ' z archívu aj z GitHubu po synchronizácii?' : ' z tohto zariadenia?';
+  if (!confirm('Vymazať uložený týždeň ' + range(start) + scope)) return;
+
+  stage({ deleteWeek: start, deleteWeekIds });
+  if (week.start === start && !draftDirty) setWeek(emptyWeek(start));
+  notify(deleteWeekIds.length
+    ? token ? 'Týždeň je odstránený z archívu. Prebieha synchronizácia.' : 'Týždeň je odstránený z archívu. Zmena na GitHube čaká na pripojenie.'
+    : 'Týždeň je vymazaný z tohto zariadenia.');
+  if (deleteWeekIds.length && !token) $('github-dialog').showModal();
 }
 function refreshLists() {
   $('load-last').disabled = !archiveHistory().length;
@@ -983,6 +1016,7 @@ async function syncWork(auth, verifyWrite) {
   let mustVerify = verifyWrite;
   let publishedWeek = false;
   let notificationFailed = false;
+  let deletionBlocked = false;
   syncLabels('Synchronizujem s GitHubom…');
   for (let attempt = 0; attempt < 5; attempt++) {
     const remote = await remoteData(auth);
@@ -990,7 +1024,11 @@ async function syncWork(auth, verifyWrite) {
     if (pending.length || mustVerify) {
       const previousDates = new Set(remote.data.history.map(item => item.data.start));
       const publication = pending.filter(op => op.publishWeek).at(-1)?.history[0];
-      for (const op of pending) applyOperation(remote.data, op);
+      for (const op of pending) {
+        if (op.deleteWeek && publishedMenuStart(remote.data) === op.deleteWeek) deletionBlocked = true;
+        applyOperation(remote.data, op);
+      }
+
       try {
         await request('PUT', auth, {
           branch, sha: remote.sha, content: encode(remote.data),
@@ -1011,7 +1049,7 @@ async function syncWork(auth, verifyWrite) {
     const remaining = state.queue.filter(op => !finished.has(op.id));
     for (const op of remaining) applyOperation(remote.data, op);
     writeState({ ...state, data: remote.data, queue: remaining });
-    sharedArchive = [];
+    sharedArchive = emptyData();
     refreshLists();
     updateAllergenButtons();
     renderPreview();
@@ -1023,7 +1061,8 @@ async function syncWork(auth, verifyWrite) {
     }
     if (!remaining.length) {
       syncLabels('Údaje sú synchronizované s GitHubom.');
-      if (notificationFailed) notify('Menu je na webe. Požiadavku na upozornenie sa nepodarilo odoslať.', true);
+      if (deletionBlocked) notify('Týždeň je zverejnený na webe. Vymazanie sa nevykonalo.', true);
+      else if (notificationFailed) notify('Menu je na webe. Požiadavku na upozornenie sa nepodarilo odoslať.', true);
       else if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
@@ -1050,7 +1089,7 @@ function openView(view) {
   $('save').hidden = view === 'archive';
   if (view === 'archive') {
     renderArchive();
-    if (!sharedArchive.length && !token) refreshArchive();
+    if (!sharedArchive.history.length && !token) refreshArchive();
   }
   renderPreview();
   document.querySelector('.work-area').scrollTop = 0;
@@ -1416,6 +1455,8 @@ if (guestMode) {
     $('archive-week').focus();
   };
   $('archive').onclick = event => {
+    const remove = event.target.closest('[data-delete-week]');
+    if (remove) return deleteSavedWeek(remove.dataset.deleteWeek);
     const button = event.target.closest('[data-open-week]');
     if (button) {
       openWeek(button.dataset.openWeek);
