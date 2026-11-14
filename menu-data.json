@@ -40,6 +40,330 @@
   },
   "history": [
     {
+      "id": "d4b5f0b2-9b27-4758-9aeb-81586b8b6728",
+      "saved": "2026-11-14T20:15:11.710Z",
+      "data": {
+        "start": "2026-11-16",
+        "days": [
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "Rajčinová so syrom",
+                "price": "",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [
+                  7
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Vyprážané filety z heika",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [
+                  4
+                ],
+                "sides": [
+                  "Zemiaková kaša",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Čiernohorský rezeň",
+                "price": "6",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  1,
+                  3,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Bravčový rezeň",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "Kurací vývar",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  9
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Znojemská cigánska pečienka",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Vyprážaný syr",
+                "price": "6",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  1,
+                  3,
+                  7,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Čiernohorský rezeň",
+                "price": "6",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  1,
+                  3,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "Gulášová",
+                "price": "",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "Segedínsky guláš",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Knedla",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Gordon Blue",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Vyprážaný kurací rezeň",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "Zemiaková kaša",
+                  "Uhorka",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "Kurací vývar",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  9
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Plnená placka s bravčovým mäsom",
+                "price": "6",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Zeleninový šalát",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Vyprážaný bravčový rezeň",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Pizza Regina",
+                "price": "7",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Šunka",
+                  "Eidam",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "Kurací vývar",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  9
+                ]
+              }
+            ],
+            "meals": [
+              {
+                "name": "Vykostené kuracie stehno na leči",
+                "price": "6",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "sides": [
+                  "Ryža",
+                  "Uhorkový šalát",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Čiernohorský rezeň",
+                "price": "6",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  1,
+                  3,
+                  10
+                ],
+                "sides": [
+                  "Opekané zemiaky",
+                  "Tatárska omáčka",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Panini",
+                "price": "7",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Šunka",
+                  "Eidam",
+                  "Cesnakový dresing",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "id": "a34d10d0-d2b2-43d3-9117-8c64f474179e",
       "saved": "2026-11-14T19:57:59.030Z",
       "data": {
@@ -503,559 +827,6 @@
           }
         ]
       }
-    },
-    {
-      "id": "e8dbe02e-800b-4163-8161-7daab067b521",
-      "saved": "2026-11-13T15:48:35.143Z",
-      "data": {
-        "start": "2026-11-16",
-        "days": [
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Rajčinová so syrom",
-                "price": "",
-                "allergensReviewed": false,
-                "allergens": [
-                  7
-                ]
-              }
-            ],
-            "meals": [
-              {
-                "name": "Vyprážané filety z heika",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  4
-                ],
-                "sides": [
-                  "Zemiaková kaša",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Čiernohorský rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1,
-                  3,
-                  10
-                ],
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Bravčový rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [],
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Kurací vývar",
-                "price": "",
-                "allergensReviewed": false,
-                "allergens": [
-                  9
-                ]
-              }
-            ],
-            "meals": [
-              {
-                "name": "Znojemská cigánska pečienka",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Vyprážaný syr",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1,
-                  3,
-                  7,
-                  10
-                ],
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Čiernohorský rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1,
-                  3,
-                  10
-                ],
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Gulášová",
-                "price": "",
-                "allergensReviewed": false,
-                "allergens": []
-              }
-            ],
-            "meals": [
-              {
-                "name": "Segedínsky guláš",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1
-                ],
-                "sides": [
-                  "Knedla",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Gordon Blue",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [],
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Vyprážaný kurací rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [],
-                "sides": [
-                  "Zemiaková kaša",
-                  "Uhorka",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Kurací vývar",
-                "price": "",
-                "allergensReviewed": false,
-                "allergens": [
-                  9
-                ]
-              }
-            ],
-            "meals": [
-              {
-                "name": "Plnená placka s bravčovým mäsom",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1
-                ],
-                "sides": [
-                  "Zeleninový šalát",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Vyprážaný bravčový rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1
-                ],
-                "sides": [
-                  "Opekané zemiaky",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Pizza Regina",
-                "price": "7",
-                "allergensReviewed": false,
-                "allergens": [
-                  1
-                ],
-                "sides": [
-                  "Šunka",
-                  "Eidam",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Kurací vývar",
-                "price": "",
-                "allergensReviewed": false,
-                "allergens": [
-                  9
-                ]
-              }
-            ],
-            "meals": [
-              {
-                "name": "Vykostené kuracie stehno na leči",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Čiernohorský rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "allergens": [
-                  1,
-                  3,
-                  10
-                ],
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Panini",
-                "price": "7",
-                "allergensReviewed": false,
-                "allergens": [
-                  1
-                ],
-                "sides": [
-                  "Šunka",
-                  "Eidam",
-                  "Cesnakový dresing",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "id": "c7c602b2-d47e-4e23-884c-e328059d9b7e",
-      "saved": "2026-11-13T14:43:45.262Z",
-      "data": {
-        "start": "2026-11-16",
-        "days": [
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Rajčinová so syrom",
-                "price": "",
-                "allergensReviewed": false
-              }
-            ],
-            "meals": [
-              {
-                "name": "Vyprážané filety z heika",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Štuchané zemiaky",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Čiernohorský rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Bravčový rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Kurací vývar",
-                "price": "",
-                "allergensReviewed": false
-              }
-            ],
-            "meals": [
-              {
-                "name": "Znojemská cigánska pečienka",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Vyprážaný syr",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Čiernohorský rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Gulášová",
-                "price": "",
-                "allergensReviewed": false
-              }
-            ],
-            "meals": [
-              {
-                "name": "Segedínsky guláš",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Knedla",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Gordon Blue",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Vyprážaný kurací rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Zemiaková kaša",
-                  "Uhorka",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Kurací vývar",
-                "price": "",
-                "allergensReviewed": false
-              }
-            ],
-            "meals": [
-              {
-                "name": "Plnená placka s bravčovým mäsom",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Zeleninový šalát",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Vyprážaný bravčový rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Opekané zemiaky",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Pizza Regina",
-                "price": "7",
-                "allergensReviewed": false,
-                "sides": [
-                  "Šunka",
-                  "Eidam",
-                  "",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          },
-          {
-            "status": "open",
-            "soups": [
-              {
-                "name": "Kurací vývar",
-                "price": "",
-                "allergensReviewed": false
-              }
-            ],
-            "meals": [
-              {
-                "name": "Vykostené kuracie stehno na leči",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Ryža",
-                  "Uhorkový šalát",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Čiernohorský rezeň",
-                "price": "6",
-                "allergensReviewed": false,
-                "sides": [
-                  "Opekané zemiaky",
-                  "Tatárska omáčka",
-                  "",
-                  "",
-                  ""
-                ]
-              },
-              {
-                "name": "Panini",
-                "price": "7",
-                "allergensReviewed": false,
-                "sides": [
-                  "Šunka",
-                  "Eidam",
-                  "Cesnakový dresing",
-                  "",
-                  ""
-                ]
-              }
-            ]
-          }
-        ]
-      }
     }
   ],
   "allergenProfiles": {
@@ -1128,5 +899,5 @@
     "phone": "0948505928",
     "footer": ""
   },
-  "publishedWeekId": "a34d10d0-d2b2-43d3-9117-8c64f474179e"
+  "publishedWeekId": "d4b5f0b2-9b27-4758-9aeb-81586b8b6728"
 }
