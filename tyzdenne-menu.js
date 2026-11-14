@@ -380,7 +380,9 @@ function stage(operation, localWeek = null) {
   }
   writeState(state);
   refreshLists();
-  if (token && !localWeek && (!operation.deleteWeek || operation.deleteWeekIds.length)) sync().catch(showSyncError);
+  if (token && !localWeek && (!operation.deleteWeek || operation.deleteWeekIds.length)) {
+    sync().catch(showSyncError);
+  }
 }
 function updateDrafts(change) {
   const drafts = read(keys.drafts, {});
@@ -859,9 +861,9 @@ function saveWeek(publish) {
   if (!publish) {
     notify('Týždeň je uložený v tomto zariadení.');
   } else if (token) {
-    notify('Týždeň je uložený. Prebieha zverejnenie pre hostí.');
+    syncLabels('Čaká sa na potvrdenie zverejnenia na GitHube…');
   } else {
-    notify('Týždeň je uložený. Pripoj GitHub a menu sa zverejní.');
+    notify('Menu je zatiaľ uložené iba v tomto zariadení. Pripoj GitHub a spusti synchronizáciu.', true);
     $('github-dialog').showModal();
   }
 }
@@ -1064,7 +1066,7 @@ async function syncWork(auth, verifyWrite) {
       renderPreview();
     }
     if (!remaining.length) {
-      syncLabels('Údaje sú synchronizované s GitHubom.');
+      syncLabels(publishedWeek ? 'Zverejnené na GitHube.' : 'Údaje sú synchronizované s GitHubom.');
       if (deletionBlocked) notify('Týždeň je zverejnený na webe. Vymazanie sa nevykonalo.', true);
       else if (notificationFailed) notify('Menu je na webe. Požiadavku na upozornenie sa nepodarilo odoslať.', true);
       else if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
