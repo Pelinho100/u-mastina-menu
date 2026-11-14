@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - .github/workflows/generate-mastina-icons.yml
+      - mastina-menu-premium.svg
+      - mastina-editor-premium.svg
 permissions:
   contents: write
 jobs:
@@ -11,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -m pip install --quiet pillow
+      - run: python3 -m pip install --quiet pillow cairosvg
       - name: Generate iOS and Android PNG icons
         run: |
           python3 - <<'PY'
@@ -33,6 +35,14 @@ jobs:
               sf=ImageFont.truetype(font,int((46 if kind=='editor' else 37)*k))
               d.text((int(256*k),int(425*k)),subtitle,font=sf,anchor='mm',fill=gold)
               im.save(f'mastina-{kind}-{size}.png',optimize=True)
+          PY
+      - name: Render premium icons from SVG
+        run: |
+          python3 - <<'PY'
+          import cairosvg
+          for kind in ('menu','editor'):
+            for size in (180,192,512):
+              cairosvg.svg2png(url=f'mastina-{kind}-premium.svg',write_to=f'mastina-{kind}-{size}.png',output_width=size,output_height=size)
           PY
       - name: Commit PNG icons
         run: |
