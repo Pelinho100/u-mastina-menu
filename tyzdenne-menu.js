@@ -276,6 +276,8 @@ week = normalizeWeek(initialDraft || week);
 let originalWeekStart = initialDraft?.originalWeekStart || week.start;
 let draftDirty = Boolean(initialDraft);
 let archiveStart = '';
+let sharedArchive = [];
+let archiveLoading = false;
 
 function writeState(value) {
   localStorage.setItem(keys.state, JSON.stringify(value));
@@ -322,7 +324,7 @@ function setWeek(next, isDraft = false) {
 }
 function openWeek(start) {
   const draft = read(keys.drafts, {})[start];
-  const saved = cache.history.find(item => item.data.start === start);
+  const saved = archiveHistory().find(item => item.data.start === start);
   dayIndex = 0;
   setWeek(draft || saved?.data || emptyWeek(start), Boolean(draft));
   openView('editor');
@@ -334,12 +336,12 @@ function changeWeekDate(value) {
     return;
   }
   const drafts = read(keys.drafts, {});
-  const saved = cache.history.some(item => item.data.start === week.start);
+  const saved = archiveHistory().some(item => item.data.start === week.start);
   if (!draftDirty && !saved) {
     openWeek(start);
     return;
   }
-  const occupied = cache.history.some(item => item.data.start === start);
+  const occupied = archiveHistory().some(item => item.data.start === start);
   if (drafts[start] || (occupied && start !== originalWeekStart)) {
     $('start').value = week.start;
     notify('Pre týždeň ' + range(start) + ' už existuje menu. Otvor ho cez Uložené týždne alebo vyber iný dátum.', true);
@@ -493,9 +495,34 @@ function dateLabel(saved) {
   const parsed = /^\d{4}-\d\d-\d\dT/.test(saved) && new Date(saved);
   return parsed && !Number.isNaN(+parsed) ? parsed.toLocaleString('sk-SK') : saved;
 }
+function archiveHistory() {
+  if (!sharedArchive.length) return cache.history;
+  const combined = { history: [...cache.history] };
+  const replaced = new Set(read(keys.state, initialState).queue.flatMap(op => op.replacedHistoryIds || []));
+  addHistory(combined, sharedArchive.filter(item => !replaced.has(item.id)));
+  return combined.history;
+}
+async function refreshArchive() {
+  if (archiveLoading) return;
+  archiveLoading = true;
+  const button = $('archive-refresh');
+  button.disabled = true;
+  $('archive-status').textContent = 'Načítavam týždne z GitHubu…';
+  try {
+    const { data } = await remoteData(token);
+    sharedArchive = data.history;
+    $('archive-status').textContent = '';
+    refreshLists();
+  } catch {
+    $('archive-status').textContent = 'GitHub sa nepodarilo načítať. Zobrazené sú dostupné týždne z prehliadača.';
+  } finally {
+    archiveLoading = false;
+    button.disabled = false;
+  }
+}
 function renderArchive() {
   const weeks = new Map();
-  for (const item of cache.history) {
+  for (const item of archiveHistory()) {
     if (!weeks.has(item.data.start)) weeks.set(item.data.start, item);
   }
   const starts = [...weeks.keys()].sort().reverse();
@@ -519,7 +546,7 @@ function renderArchive() {
   ).join('') : '<p class="muted">Žiadne rozpracované týždne.</p>';
 }
 function refreshLists() {
-  $('load-last').disabled = !cache.history.length;
+  $('load-last').disabled = !archiveHistory().length;
   renderArchive();
   if (!$('archive').hidden) renderPreview();
   renderDatabase();
@@ -570,7 +597,7 @@ function fitPaper() {
   paper.style.transform = 'scale(' + frame.clientWidth / parseFloat(size.width) + ')';
 }
 function renderPreview() {
-  const saved = $('archive').hidden ? null : cache.history.find(item => item.data.start === archiveStart);
+  const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
   const previewWeek = saved?.data || week;
   const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start, false, Boolean(saved)));
   const entries = weekAllergens(previewWeek, Boolean(saved));
@@ -611,7 +638,7 @@ function collectWeek() {
   };
 }
 function saveWeek() {
-  const latest = read(keys.state, initialState).data.history;
+  const latest = archiveHistory();
   const moved = originalWeekStart !== week.start;
   if (moved && latest.some(item => item.data.start === week.start)) {
     notify('Pre nový dátum už existuje uložené menu. Vyber iný dátum.', true);
@@ -766,6 +793,7 @@ async function syncWork(auth, verifyWrite) {
     const remaining = read(keys.state, initialState).queue.filter(op => !finished.has(op.id));
     for (const op of remaining) applyOperation(remote.data, op);
     writeState({ data: remote.data, queue: remaining });
+    sharedArchive = [];
     refreshLists();
     updateAllergenButtons();
     renderPreview();
@@ -800,7 +828,10 @@ function openView(view) {
     else button.removeAttribute('aria-current');
   }
   $('save').hidden = view === 'archive';
-  if (view === 'archive') renderArchive();
+  if (view === 'archive') {
+    renderArchive();
+    if (!sharedArchive.length && !token) refreshArchive();
+  }
   renderPreview();
   document.querySelector('.work-area').scrollTop = 0;
 }
@@ -1022,7 +1053,8 @@ if (kitchenMode) {
   });
   $('start').onchange = event => changeWeekDate(event.target.value);
   $('save').onclick = saveWeek;
-  $('load-last').onclick = () => showSavedWeek(cache.history[0]);
+  $('load-last').onclick = () => showSavedWeek(archiveHistory()[0]);
+  $('archive-refresh').onclick = refreshArchive;
   $('archive-week').onchange = event => {
     archiveStart = event.target.value;
     renderArchive();
@@ -1039,7 +1071,7 @@ if (kitchenMode) {
   };
   $('new-week').onclick = () => openWeek(iso(dateAt(week.start, 7)));
   $('print').onclick = () => {
-    const saved = $('archive').hidden ? null : cache.history.find(item => item.data.start === archiveStart);
+    const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
     const pending = weekAllergens(saved?.data || week, Boolean(saved)).filter(item => item.pending);
     if (pending.length) {
       alert('Pred tlačou over alergény:\n' + pending.map(item => item.day + ' · ' + item.name).join('\n') +
@@ -1160,4 +1192,5 @@ if (kitchenMode) {
   window.addEventListener('online', () => { if (token) sync().catch(showSyncError); });
   window.addEventListener('focus', () => { if (token) sync().catch(showSyncError); });
   restoreConnection();
+  if (new URLSearchParams(location.search).get('view') === 'archiv') openView('archive');
 }

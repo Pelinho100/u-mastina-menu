@@ -9,7 +9,7 @@
 <script defer src="menu-qr.js?v=8"></script>
 <script defer src="menu-pairing.js?v=8"></script>
 <script defer src="menu-print.js?v=14"></script>
-<script defer src="tyzdenne-menu.js?v=14"></script>
+<script defer src="tyzdenne-menu.js?v=15"></script>
 </head>
 <body>
 <header class="app-header">
@@ -53,6 +53,8 @@
       <section class="edit-card">
         <label for="archive-week">Vyber týždeň</label>
         <select id="archive-week"></select>
+        <div class="settings-actions"><button id="archive-refresh" type="button" class="secondary">Načítať z GitHubu</button></div>
+        <p id="archive-status" class="muted" role="status"></p>
         <div id="archive-details"></div>
       </section>
       <section class="edit-card archive-drafts">
