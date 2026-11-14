@@ -62,7 +62,9 @@ const allergenNames = [
   'Mlieko vrátane laktózy', 'Škrupinové plody', 'Zeler', 'Horčica', 'Sezam',
   'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
 ];
+const porkCutletName = /^bravcov\w* rezen$/;
 const allergenHints = [
+  [porkCutletName, [1, 3]],
   [/\b(vyprazan\w*|trojobal\w*|obalovan\w*|ciernohorsk\w* rezen|(?:cordon|gordon) (?:bleu|blue))\b/, [1, 3]],
   [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*|pizz\w*|panin\w*)\b/, [1]],
   [/\b(vajc\w*|vajec\w*|majonez\w*)\b/, [3]],
@@ -108,11 +110,21 @@ function allergenReview(item, kind) {
   };
 }
 function displayAllergens(item, kind, archived) {
-  if (archived && Array.isArray(item.allergens)) return { codes: item.allergens, pending: false };
-  return allergenReview(item, kind);
+  const review = archived && Array.isArray(item.allergens)
+    ? { codes: item.allergens, pending: false }
+    : allergenReview(item, kind);
+  if (kind === 'dishes' && porkCutletName.test(fold(item.name))) {
+    const extra = [1, 3].filter(code => !review.codes.includes(code));
+    if (extra.length) return { ...review, extra };
+  }
+  return review;
 }
-function allergenLabel({ codes, pending }) {
-  if (pending) return codes.length ? 'Odhad: ' + codes.join(', ') : 'Alergény: neurčené';
+function allergenLabel({ codes, pending, extra = [] }) {
+  if (pending) {
+    const estimate = allergenCodes([...codes, ...extra]);
+    return estimate.length ? 'Odhad: ' + estimate.join(', ') : 'Alergény: neurčené';
+  }
+  if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Odhad: ' + extra.join(', ');
   return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
 }
 function allergenButton(kind, index) {
@@ -122,11 +134,9 @@ function updateAllergenButtons() {
   for (const button of $('day-editor').querySelectorAll('[data-allergens]')) {
     const [kind, index] = button.dataset.allergens.split('.');
     const item = week.days[dayIndex][kind][index];
-    const review = allergenReview(item, kind === 'meals' ? 'dishes' : 'soups');
+    const review = displayAllergens(item, kind === 'meals' ? 'dishes' : 'soups', false);
     button.hidden = !clean(item.name);
-    button.textContent = review.pending && review.codes.length
-      ? 'Odhad alergénov: ' + review.codes.join(', ')
-      : allergenLabel(review);
+    button.textContent = allergenLabel(review);
     button.setAttribute('aria-label', item.name + ' · ' + button.textContent + ' · upraviť alergény');
   }
 }
@@ -610,7 +620,10 @@ function renderPreview() {
     ...day.soups.map(item => [item, 'soups']),
     ...day.meals.map(item => [item, 'dishes'])
   ]).filter(([item]) => clean(item.name));
-  const pending = entries.some(([item, kind]) => displayAllergens(item, kind, Boolean(saved)).pending);
+  const pending = entries.some(([item, kind]) => {
+    const review = displayAllergens(item, kind, Boolean(saved));
+    return review.pending || review.extra?.length;
+  });
   $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
