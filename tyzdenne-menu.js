@@ -63,6 +63,8 @@ const allergenNames = [
   'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
 ];
 const recipeAllergenHints = [
+  // Plnený rezeň so syrom v trojobale: https://www.recepto.sk/recept/kuraci-rezen-cordon-bleu/
+  [/\b(?:cordon|gordon)[\s-]+(?:bleu|blue|ble)\b|^(?:cordon|gordon)$/, [1, 3, 7]],
   // Trojobal: https://www.tastelist.sk/recept/kuraci-vyprazany-rezen/FY4BniFgiWloKmmXKc4I
   [/^bravcov\w* rezen$|\b(?:vyprazan\w* (?:(?:kurac\w*|bravcov\w*|mor\w*|telac\w*) )?|kurac\w* vyprazan\w* )(?:rezen|rezne|syr\w*|filet\w*|file|ryb\w*)\b/, [1, 3]],
   // Smotanový variant: https://varecha.pravda.sk/recepty/segedinsky-gulas/79697-recept.html
@@ -72,14 +74,14 @@ const recipeAllergenHints = [
 ];
 const allergenHints = [
   ...recipeAllergenHints,
-  [/\b(trojobal\w*|obalovan\w*|ciernohorsk\w* rezen|(?:cordon|gordon) (?:bleu|blue))\b/, [1, 3]],
+  [/\b(trojobal\w*|obalovan\w*|ciernohorsk\w* rezen)\b/, [1, 3]],
   [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*|pizz\w*|panin\w*)\b/, [1]],
   [/\b(vajc\w*|vajec\w*|majonez\w*)\b/, [3]],
   [/\b(ryb\w*|heik\w*|losos\w*|tuniak\w*|tresk\w*|pstruh\w*)\b/, [4]],
   [/\b(krevet\w*|krab\w*|homar\w*)\b/, [2]],
   [/\b(arasid\w*|burak\w*)\b/, [5]],
   [/\b(soj\w*|tofu)\b/, [6]],
-  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*|eidam\w*|mozzarell\w*|parmezan\w*|zemiakov\w* kas\w*|(?:cordon|gordon) (?:bleu|blue))\b/, [7]],
+  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*|eidam\w*|mozzarell\w*|parmezan\w*|zemiakov\w* kas\w*)\b/, [7]],
   [/\b(orech\w*|mandl\w*|pistaci\w*|kesu)\b/, [8]],
   [/\b(zeler\w*|vyvar\w*|bujon\w*)\b/, [9]],
   [/\b(horcic\w*)\b/, [10]],
@@ -121,9 +123,9 @@ function displayAllergens(item, kind, archived) {
   const review = archived && Array.isArray(item.allergens)
     ? { codes: item.allergens, pending: false }
     : allergenReview(item, kind);
-  if (archived && item.allergensReviewed) return review;
+  if (archived && item.allergensReviewed && item.allergenVersion === 20) return review;
   const extra = allergenCodes(allergenComponents(item, kind).flatMap(component =>
-    cache.allergenReviewed?.[component.key] && !archived ? [] : suggestedAllergens(component.name, recipeAllergenHints)
+    cache.allergenReviewed?.[component.key] && (!archived || item.allergenVersion === 20) ? [] : component.suggested
   ))
     .filter(code => !review.codes.includes(code));
   if (extra.length) return { ...review, extra };
@@ -134,7 +136,7 @@ function allergenLabel({ codes, pending, extra = [] }) {
     const estimate = allergenCodes([...codes, ...extra]);
     return estimate.length ? 'Odhad: ' + estimate.join(', ') : 'Alergény: neurčené';
   }
-  if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Skontrolovať: ' + extra.join(', ');
+  if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Odhad: ' + extra.join(', ');
   return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
 }
 function allergenButton(kind, index) {
@@ -146,7 +148,7 @@ function updateAllergenButtons() {
     const item = week.days[dayIndex][kind][index];
     const review = displayAllergens(item, kind === 'meals' ? 'dishes' : 'soups', false);
     button.hidden = !clean(item.name);
-    button.textContent = allergenLabel(review);
+    button.textContent = 'Upraviť alergény · ' + allergenLabel(review);
     button.setAttribute('aria-label', item.name + ' · ' + button.textContent + ' · upraviť alergény');
   }
 }
@@ -158,17 +160,16 @@ function openAllergens(path) {
     .map(component => [component.key, component])).values()];
   $('allergen-title').textContent = 'Alergény – ' + item.name;
   $('allergen-fields').innerHTML = components.map((component, componentIndex) => {
-    const extraHints = component.suggested.filter(code => !component.codes.includes(code));
+    const manuallySet = cache.allergenReviewed?.[component.key];
+    const selected = manuallySet ? component.codes : allergenCodes([...component.codes, ...component.suggested]);
     return `
     <fieldset><legend>${esc(component.name)}</legend>
-      <p class="muted">${component.confirmed !== undefined ? 'Uložené podľa receptúry' : 'Návrh podľa názvu. Skontroluj receptúru a etikety.'}</p>
-      ${extraHints.length ? '<p class="muted">Podľa názvu ešte skontroluj: ' + extraHints.join(', ') + '.</p>' : ''}
+      <p class="muted">${manuallySet ? 'Uložené podľa receptúry' : 'Predvyplnené podľa názvu a uložených údajov'}</p>
       <div class="allergen-options">${allergenNames.map((name, i) =>
-        `<label><input type="checkbox" name="component-${componentIndex}" value="${i + 1}" ${component.codes.includes(i + 1) ? 'checked' : ''}> ${i + 1}. ${name}</label>`
+        `<label><input type="checkbox" name="component-${componentIndex}" value="${i + 1}" ${selected.includes(i + 1) ? 'checked' : ''}> ${i + 1}. ${name}</label>`
       ).join('')}</div>
     </fieldset>`;
   }).join('');
-  $('allergen-confirm').checked = false;
   $('allergen-form').onsubmit = event => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -191,10 +192,11 @@ function normalizeWeek(raw) {
       const day = raw?.days?.[i];
       if (!day) return emptyDay();
       return {
-        soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price), allergensReviewed: soup?.allergensReviewed === true, allergens: Array.isArray(soup?.allergens) ? allergenCodes(soup.allergens) : undefined })),
+        soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price), allergensReviewed: soup?.allergensReviewed === true, allergenVersion: soup?.allergenVersion, allergens: Array.isArray(soup?.allergens) ? allergenCodes(soup.allergens) : undefined })),
         meals: list(day.meals).map(meal => ({
           name: text(meal?.name), price: text(meal?.price),
           allergensReviewed: meal?.allergensReviewed === true,
+          allergenVersion: meal?.allergenVersion,
           allergens: Array.isArray(meal?.allergens) ? allergenCodes(meal.allergens) : undefined,
           sides: Array.from({ length: 5 }, (_, j) => text(meal?.sides?.[j] ?? meal?.['side' + (j + 1)] ?? (j === 0 ? meal?.side : '')))
         }))
@@ -688,6 +690,7 @@ function saveWeek() {
     for (const [kind, items] of [['soups', day.soups], ['dishes', day.meals]]) {
       for (const item of items) {
         const review = allergenReview(item, kind);
+        item.allergenVersion = 20;
         item.allergens = review.pending ? undefined : review.codes;
         item.allergensReviewed = !review.pending && !displayAllergens(item, kind, false).extra?.length;
       }
