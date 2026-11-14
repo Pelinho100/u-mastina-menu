@@ -791,7 +791,7 @@ async function refreshGuestMenu() {
   const refresh = $('guest-refresh');
   refresh.disabled = true;
   try {
-    const url = publicMenuData + '?at=' + Math.floor(Date.now() / 10000);
+    const url = publicMenuData + '?at=' + Date.now();
     const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) throw new Error('Menu unavailable');
     const raw = await response.json();
