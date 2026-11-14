@@ -40,6 +40,471 @@
   },
   "history": [
     {
+      "id": "a34d10d0-d2b2-43d3-9117-8c64f474179e",
+      "saved": "2026-11-14T19:57:59.030Z",
+      "data": {
+        "start": "2026-11-23",
+        "days": [
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "Gordon Blue",
+                "price": "",
+                "allergensReviewed": false,
+                "allergenVersion": 20,
+                "sides": [
+                  "Zemiaky",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "Panini",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  1
+                ],
+                "sides": [
+                  "Cesnakový dresing",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          },
+          {
+            "status": "open",
+            "soups": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": []
+              }
+            ],
+            "meals": [
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              },
+              {
+                "name": "",
+                "price": "",
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [],
+                "sides": [
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "id": "e8dbe02e-800b-4163-8161-7daab067b521",
       "saved": "2026-11-13T15:48:35.143Z",
       "data": {
@@ -662,5 +1127,6 @@
     "icdph": "",
     "phone": "0948505928",
     "footer": ""
-  }
+  },
+  "publishedWeekId": "a34d10d0-d2b2-43d3-9117-8c64f474179e"
 }
