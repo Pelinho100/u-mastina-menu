@@ -62,6 +62,13 @@ const allergenNames = [
   'Mlieko vrátane laktózy', 'Škrupinové plody', 'Zeler', 'Horčica', 'Sezam',
   'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
 ];
+const soupAliases = new Map([
+  ['vyvar', 'polievka kuracia'],
+  ['kuraci vyvar', 'polievka kuracia'],
+  ['kuracia', 'polievka kuracia'],
+  ['hovadzi vyvar', 'polievka hovadzi vyvar (varene hovadzie maso)'],
+  ['paradajkova so syrom', 'polievka paradajkova']
+]);
 const recipeAllergenHints = [
   // Znojemská omáčka s pšeničnou múkou a horčicou: https://www.recepto.sk/recept/znojemska-hovadzia-pecienka/
   [/\bznojemsk\w* (?:[a-z]+ ){0,2}pecienk\w*\b/, [1, 10]],
@@ -77,28 +84,43 @@ const recipeAllergenHints = [
 const allergenHints = [
   ...recipeAllergenHints,
   [/\b(trojobal\w*|obalovan\w*|ciernohorsk\w* rezen)\b/, [1, 3]],
-  [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*|pizz\w*|panin\w*)\b/, [1]],
+  [/\b(psenic\w*|razn\w*|jacmen\w*|ovsen\w*|spald\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*|pizz\w*|panin\w*|tarhon\w*|bulgur\w*|kuskus\w*)\b/, [1]],
+  [/\b(?:muk\w* (?:hladk\w*|polohrub\w*|hrub\w*)|(?:hladk\w*|polohrub\w*|hrub\w*) muk\w*)\b/, [1]],
   [/\b(vajc\w*|vajec\w*|majonez\w*)\b/, [3]],
   [/\b(ryb\w*|heik\w*|losos\w*|tuniak\w*|tresk\w*|pstruh\w*)\b/, [4]],
   [/\b(krevet\w*|krab\w*|homar\w*)\b/, [2]],
   [/\b(arasid\w*|burak\w*)\b/, [5]],
   [/\b(soj\w*|tofu)\b/, [6]],
-  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*|eidam\w*|mozzarell\w*|parmezan\w*|zemiakov\w* kas\w*)\b/, [7]],
-  [/\b(orech\w*|mandl\w*|pistaci\w*|kesu)\b/, [8]],
-  [/\b(zeler\w*|vyvar\w*|bujon\w*)\b/, [9]],
+  [/\b(syr\w*|mliek\w*|mliec\w*|smotan\w*|maslo|maslov\w*|bryndz\w*|tvaroh\w*|eidam\w*|mozzarell\w*|parmezan\w*|jogurt\w*|kefir\w*|cmar\w*|zemiakov\w* kas\w*)\b/, [7]],
+  [/\b(?:mandl\w*|pistaci\w*|kesu|pekan\w*|makadami\w*|(?:lieskov\w*|vlassk\w*|para|vlas)[ -]orech\w*)\b/, [8]],
+  [/\b(zeler\w*)\b/, [9]],
   [/\b(horcic\w*)\b/, [10]],
   [/\b(tatarsk\w*)\b/, [3, 10]],
   [/\b(sezam\w*)\b/, [11]],
   [/\b(vlc\w* bob\w*|lupin\w*)\b/, [13]],
-  [/\b(musl\w*|ustric\w*|kalamar\w*|chobotnic\w*|slavk\w*)\b/, [14]]
+  [/\b(musl\w*|ustrica|ustrice|ustricami|kalamar\w*|chobotnic\w*|slavk\w*)\b/, [14]]
 ];
 function allergenCodes(values) {
   return [...new Set(list(values).filter(code => Number.isInteger(code) && code >= 1 && code <= allergenNames.length))]
     .sort((a, b) => a - b);
 }
-function suggestedAllergens(name, hints = allergenHints) {
+function referenceSoupAllergens(name) {
+  const soup = name.replace(/^polievka\s+|\s+polievka$/g, '').replace(/rajcinov/g, 'paradajkov');
+  const catalog = referenceAllergens.soups;
+  const noodles = soup.match(/^(.* vyvar|vyvar) s(?:o)? ((?:domacimi |vajecnymi |bezvajecnymi )?rezancami)$/);
+  if (noodles) {
+    const broth = referenceSoupAllergens(noodles[1]);
+    const eggs = /^(domacimi|vajecnymi) /.test(noodles[2]) ? [3] : [];
+    return broth && allergenCodes([...broth, 1, ...eggs]);
+  }
+  return catalog.get(name) ?? catalog.get(soupAliases.get(soup)) ??
+    catalog.get('polievka ' + soup) ?? catalog.get(soup);
+}
+function suggestedAllergens(name, kind) {
   const normalized = fold(name);
-  return allergenCodes(hints.flatMap(([pattern, codes]) => pattern.test(normalized) ? codes : []));
+  const reference = kind === 'soups' ? referenceSoupAllergens(normalized) : referenceAllergens[kind].get(normalized);
+  if (reference) return reference;
+  return allergenCodes(allergenHints.flatMap(([pattern, codes]) => pattern.test(normalized) ? codes : []));
 }
 function normalizeProfiles(profiles) {
   return Object.fromEntries(Object.entries(profiles || {}).filter(([key, codes]) =>
@@ -110,7 +132,7 @@ function allergenComponents(item, kind) {
   return entries.filter(([, name]) => clean(name)).map(([category, name]) => {
     const key = category + ':' + fold(name);
     const confirmed = cache.allergenProfiles?.[key];
-    const suggested = suggestedAllergens(name);
+    const suggested = suggestedAllergens(name, category);
     return { key, name, confirmed, suggested, codes: confirmed ?? suggested };
   });
 }
@@ -141,7 +163,7 @@ function allergenLabel({ codes, pending, extra = [] }, forGuests = false) {
   }
   if (extra.length) return 'Alergény: ' + allergenCodes([...codes, ...extra])
     .map(code => code + (extra.includes(code) ? '*' : '')).join(', ');
-  return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
+  return codes.length ? 'Alergény: ' + codes.join(', ') : 'Alergény: žiadne označené';
 }
 function allergenButton(kind, index) {
   return `<button type="button" class="secondary allergen-button" data-allergens="${kind}.${index}" aria-haspopup="dialog">Alergény</button>`;
