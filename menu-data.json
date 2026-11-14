@@ -49,6 +49,7 @@
               {
                 "name": "Rajčinová so syrom",
                 "price": "",
+                "allergensReviewed": false,
                 "allergens": [
                   7
                 ]
@@ -58,6 +59,7 @@
               {
                 "name": "Vyprážané filety z heika",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   4
                 ],
@@ -72,6 +74,7 @@
               {
                 "name": "Čiernohorský rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1,
                   3,
@@ -88,6 +91,7 @@
               {
                 "name": "Bravčový rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [],
                 "sides": [
                   "Ryža",
@@ -104,6 +108,7 @@
               {
                 "name": "Kurací vývar",
                 "price": "",
+                "allergensReviewed": false,
                 "allergens": [
                   9
                 ]
@@ -113,6 +118,7 @@
               {
                 "name": "Znojemská cigánska pečienka",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Ryža",
                   "Uhorkový šalát",
@@ -124,6 +130,7 @@
               {
                 "name": "Vyprážaný syr",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1,
                   3,
@@ -141,6 +148,7 @@
               {
                 "name": "Čiernohorský rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1,
                   3,
@@ -161,6 +169,7 @@
               {
                 "name": "Gulášová",
                 "price": "",
+                "allergensReviewed": false,
                 "allergens": []
               }
             ],
@@ -168,6 +177,7 @@
               {
                 "name": "Segedínsky guláš",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1
                 ],
@@ -182,6 +192,7 @@
               {
                 "name": "Gordon Blue",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [],
                 "sides": [
                   "Ryža",
@@ -194,6 +205,7 @@
               {
                 "name": "Vyprážaný kurací rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [],
                 "sides": [
                   "Zemiaková kaša",
@@ -210,6 +222,7 @@
               {
                 "name": "Kurací vývar",
                 "price": "",
+                "allergensReviewed": false,
                 "allergens": [
                   9
                 ]
@@ -219,6 +232,7 @@
               {
                 "name": "Plnená placka s bravčovým mäsom",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1
                 ],
@@ -233,6 +247,7 @@
               {
                 "name": "Vyprážaný bravčový rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1
                 ],
@@ -247,6 +262,7 @@
               {
                 "name": "Pizza Regina",
                 "price": "7",
+                "allergensReviewed": false,
                 "allergens": [
                   1
                 ],
@@ -265,6 +281,7 @@
               {
                 "name": "Kurací vývar",
                 "price": "",
+                "allergensReviewed": false,
                 "allergens": [
                   9
                 ]
@@ -274,6 +291,7 @@
               {
                 "name": "Vykostené kuracie stehno na leči",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Ryža",
                   "Uhorkový šalát",
@@ -285,6 +303,7 @@
               {
                 "name": "Čiernohorský rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "allergens": [
                   1,
                   3,
@@ -301,6 +320,7 @@
               {
                 "name": "Panini",
                 "price": "7",
+                "allergensReviewed": false,
                 "allergens": [
                   1
                 ],
@@ -327,13 +347,15 @@
             "soups": [
               {
                 "name": "Rajčinová so syrom",
-                "price": ""
+                "price": "",
+                "allergensReviewed": false
               }
             ],
             "meals": [
               {
                 "name": "Vyprážané filety z heika",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Štuchané zemiaky",
                   "Uhorkový šalát",
@@ -345,6 +367,7 @@
               {
                 "name": "Čiernohorský rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Opekané zemiaky",
                   "Tatárska omáčka",
@@ -356,6 +379,7 @@
               {
                 "name": "Bravčový rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Ryža",
                   "Uhorkový šalát",
@@ -370,13 +394,15 @@
             "soups": [
               {
                 "name": "Kurací vývar",
-                "price": ""
+                "price": "",
+                "allergensReviewed": false
               }
             ],
             "meals": [
               {
                 "name": "Znojemská cigánska pečienka",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Ryža",
                   "Uhorkový šalát",
@@ -388,6 +414,7 @@
               {
                 "name": "Vyprážaný syr",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Opekané zemiaky",
                   "Tatárska omáčka",
@@ -399,6 +426,7 @@
               {
                 "name": "Čiernohorský rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Opekané zemiaky",
                   "Tatárska omáčka",
@@ -413,13 +441,15 @@
             "soups": [
               {
                 "name": "Gulášová",
-                "price": ""
+                "price": "",
+                "allergensReviewed": false
               }
             ],
             "meals": [
               {
                 "name": "Segedínsky guláš",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Knedla",
                   "",
@@ -431,6 +461,7 @@
               {
                 "name": "Gordon Blue",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Ryža",
                   "Uhorkový šalát",
@@ -442,6 +473,7 @@
               {
                 "name": "Vyprážaný kurací rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Zemiaková kaša",
                   "Uhorka",
@@ -456,13 +488,15 @@
             "soups": [
               {
                 "name": "Kurací vývar",
-                "price": ""
+                "price": "",
+                "allergensReviewed": false
               }
             ],
             "meals": [
               {
                 "name": "Plnená placka s bravčovým mäsom",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Zeleninový šalát",
                   "",
@@ -474,6 +508,7 @@
               {
                 "name": "Vyprážaný bravčový rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Opekané zemiaky",
                   "Uhorkový šalát",
@@ -485,6 +520,7 @@
               {
                 "name": "Pizza Regina",
                 "price": "7",
+                "allergensReviewed": false,
                 "sides": [
                   "Šunka",
                   "Eidam",
@@ -499,13 +535,15 @@
             "soups": [
               {
                 "name": "Kurací vývar",
-                "price": ""
+                "price": "",
+                "allergensReviewed": false
               }
             ],
             "meals": [
               {
                 "name": "Vykostené kuracie stehno na leči",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Ryža",
                   "Uhorkový šalát",
@@ -517,6 +555,7 @@
               {
                 "name": "Čiernohorský rezeň",
                 "price": "6",
+                "allergensReviewed": false,
                 "sides": [
                   "Opekané zemiaky",
                   "Tatárska omáčka",
@@ -528,6 +567,7 @@
               {
                 "name": "Panini",
                 "price": "7",
+                "allergensReviewed": false,
                 "sides": [
                   "Šunka",
                   "Eidam",
@@ -595,5 +635,21 @@
       1
     ],
     "sides:cesnakovy dresing": []
+  },
+  "allergenReviewed": {},
+  "settings": {
+    "restaurant": "Reštaurácia U Mastina",
+    "title": "Obedové menu",
+    "hours": "10:00 – 14:00",
+    "orderphone": "0908897320",
+    "orderemail": "",
+    "orderinfo": "Objednávky aj cez bolt",
+    "owner": "Peter Miškovič",
+    "address": "Robotnicka 86",
+    "ico": "",
+    "dic": "",
+    "icdph": "",
+    "phone": "0948505928",
+    "footer": ""
   }
 }
