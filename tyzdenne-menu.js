@@ -788,8 +788,11 @@ async function refreshGuestMenu() {
   guestLoading = true;
   const status = $('guest-status');
   const frame = $('paper-frame');
+  const refresh = $('guest-refresh');
+  refresh.disabled = true;
   try {
-    const response = await fetch(publicMenuData, { cache: 'no-store' });
+    const url = publicMenuData + '?at=' + Math.floor(Date.now() / 10000);
+    const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) throw new Error('Menu unavailable');
     const raw = await response.json();
     if (raw.schema !== 1 || !Array.isArray(raw.history)) throw new Error('Invalid menu data');
@@ -813,6 +816,7 @@ async function refreshGuestMenu() {
     status.textContent = frame.hidden ? 'Menu sa nepodarilo načítať. Skús obnoviť stránku.' : 'Menu sa nepodarilo aktualizovať. Zobrazená je posledná načítaná ponuka.';
     status.hidden = false;
   } finally {
+    refresh.disabled = false;
     guestLoading = false;
   }
 }
@@ -1312,11 +1316,13 @@ if (guestMode) {
   setUpGuestInstall();
   $('guest-status').hidden = false;
   $('paper-frame').hidden = true;
+  $('guest-refresh').onclick = refreshGuestMenu;
   $('guest-print').onclick = () => menuPrint.open([$('paper')]);
   new ResizeObserver(fitPaper).observe(document.querySelector('.preview-pane'));
   const refreshVisibleGuestMenu = () => { if (!document.hidden) refreshGuestMenu(); };
   document.addEventListener('visibilitychange', refreshVisibleGuestMenu);
   window.addEventListener('pageshow', refreshVisibleGuestMenu);
+  window.addEventListener('focus', refreshVisibleGuestMenu);
   window.addEventListener('online', refreshVisibleGuestMenu);
   setInterval(refreshVisibleGuestMenu, 60_000);
   refreshGuestMenu();
