@@ -29,7 +29,7 @@ jobs:
             "included_segments": ["Subscribed Users"],
             "headings": {"en": "U Mastina – nové obedové menu"},
             "contents": {"en": "Nové týždenné obedové menu je zverejnené! Pozrite si, čo sme pre vás pripravili. 🍽️"},
-            "url": "https://pelinho100.github.io/u-mastina-menu/tyzdenne-menu.html?view=host"
+            "url": "https://pelinho100.github.io/u-mastina-menu/obedove-menu.html"
           }, ensure_ascii=False))
           PY
           curl --fail-with-body --show-error --silent --retry 2 \
