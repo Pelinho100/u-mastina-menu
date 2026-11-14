@@ -34,7 +34,8 @@
       "Uhorka",
       "Uhorkový šalát",
       "Zeleninový šalát",
-      "Zemiaková kaša"
+      "Zemiaková kaša",
+      "Zemiaky"
     ]
   },
   "history": [
@@ -45,6 +46,7 @@
         "start": "2026-11-16",
         "days": [
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Rajčinová so syrom",
@@ -104,6 +106,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Kurací vývar",
@@ -165,6 +168,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Gulášová",
@@ -218,6 +222,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Kurací vývar",
@@ -277,6 +282,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Kurací vývar",
@@ -344,6 +350,7 @@
         "start": "2026-11-16",
         "days": [
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Rajčinová so syrom",
@@ -391,6 +398,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Kurací vývar",
@@ -438,6 +446,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Gulášová",
@@ -485,6 +494,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Kurací vývar",
@@ -532,6 +542,7 @@
             ]
           },
           {
+            "status": "open",
             "soups": [
               {
                 "name": "Kurací vývar",
