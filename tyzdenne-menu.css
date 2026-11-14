@@ -193,11 +193,13 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 .guest-mode .app-header, .guest-mode .sidebar, .guest-mode .work-area, .guest-mode .preview-title { display: none; }
 .guest-mode .workspace { display: block; max-width: 832px; min-height: 0; height: auto; margin: auto; }
 .guest-mode .preview-pane { border: 0; }
-#guest-tools { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+#guest-tools { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+#guest-install-help { margin: 0 0 8px; padding: 10px 12px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 14px; }
+#guest-install-help p + p { margin-top: 5px; }
 #guest-status { margin: 8px 0; font-size: 14px; }
 @media screen and (max-width: 650px) {
   .guest-mode .preview-pane { padding: 8px 4px 14px; }
 }
 @media print {
-  #guest-tools, #guest-status { display: none !important; }
+  #guest-tools, #guest-install-help, #guest-status { display: none !important; }
 }

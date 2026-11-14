@@ -1118,11 +1118,59 @@ async function restoreConnection() {
   if (!$('github-dialog').open) $('github-dialog').showModal();
 }
 
+function setUpGuestInstall() {
+  for (const [rel, href] of [['manifest', 'menu.webmanifest'], ['apple-touch-icon', 'menu-ikona-192.png']]) {
+    const link = document.createElement('link');
+    link.rel = rel;
+    link.href = href;
+    document.head.append(link);
+  }
+
+  const button = $('guest-install');
+  const help = $('guest-install-help');
+  let installPrompt;
+  const setHelp = open => {
+    help.hidden = !open;
+    button.setAttribute('aria-expanded', String(open));
+  };
+  if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) {
+    button.hidden = true;
+  }
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    installPrompt = event;
+  });
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    button.hidden = true;
+    setHelp(false);
+  });
+  button.onclick = async () => {
+    if (!installPrompt) {
+      setHelp(help.hidden);
+      return;
+    }
+    const prompt = installPrompt;
+    installPrompt = null;
+    try {
+      await prompt.prompt();
+      const result = await prompt.userChoice;
+      if (result.outcome === 'accepted') {
+        button.hidden = true;
+        setHelp(false);
+      }
+    } catch {
+      setHelp(true);
+    }
+  };
+}
+
 if (guestMode) {
   document.title = 'Obedové menu · U Mastina';
   document.body.classList.add('guest-mode');
   document.querySelector('.preview-pane').setAttribute('aria-label', 'Obedové menu U Mastina');
   $('guest-tools').hidden = false;
+  setUpGuestInstall();
   $('guest-status').hidden = false;
   $('paper-frame').hidden = true;
   $('guest-print').onclick = () => menuPrint.open([$('paper')]);
