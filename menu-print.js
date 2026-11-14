@@ -105,6 +105,8 @@ const menuPrint = (() => {
         rule(y);
         y += 10;
       }
+      const notice = day.querySelector('.print-day-notice');
+      if (notice) y = label(notice.textContent, 0, y + 2, width, kitchen ? 22 : 11, 'Arial', 'bold') + 4;
       for (const group of day.querySelectorAll('.print-group')) {
         const title = group.querySelector('h4').textContent.toLocaleUpperCase('sk');
         const soupBand = !kitchen && group.matches('.print-soups');

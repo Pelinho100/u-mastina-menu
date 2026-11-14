@@ -1,0 +1,25 @@
+name: Oznámenie o novom obedovom menu
+
+on:
+  repository_dispatch:
+    types: [mastina-new-menu]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mastina-menu-notifications
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+      WEEK: ${{ github.event.client_payload.week }}
+      MENU_RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/menu-data/menu-data.json
+    steps:
+      - uses: actions/checkout@v4
+      - name: Odoslať upozornenie pre aktuálny týždeň
+        run: node .github/send-menu-notification.mjs

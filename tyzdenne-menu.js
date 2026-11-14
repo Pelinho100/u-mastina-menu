@@ -57,7 +57,9 @@ const formatDate = (start, offset = 0) => dateAt(start, offset).toLocaleDateStri
 const range = start => formatDate(start) + ' – ' + formatDate(start, 4);
 const emptyMeal = () => ({ name: '', price: '', sides: Array(5).fill('') });
 const emptySoup = () => ({ name: '', price: '' });
-const emptyDay = () => ({ soups: [emptySoup(), emptySoup()], meals: Array.from({ length: 5 }, emptyMeal) });
+const dayStatuses = { open: 'Otvorené', holiday: 'Sviatok', closed: 'Zatvorené' };
+const dayNotice = day => day.status === 'holiday' ? 'Sviatok · obedové menu nepodávame' : day.status === 'closed' ? 'Zatvorené' : '';
+const emptyDay = () => ({ status: 'open', soups: [emptySoup(), emptySoup()], meals: Array.from({ length: 5 }, emptyMeal) });
 const emptyWeek = (start = monday()) => ({ start, days: days.map(emptyDay) });
 const emptyData = () => ({ schema: 1, library: { dishes: [], soups: [], sides: [] }, history: [] });
 
@@ -222,6 +224,7 @@ function normalizeWeek(raw) {
       const day = raw?.days?.[i];
       if (!day) return emptyDay();
       return {
+        status: Object.hasOwn(dayStatuses, day.status) ? day.status : 'open',
         soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price), allergensReviewed: soup?.allergensReviewed === true, allergenVersion: soup?.allergenVersion, allergens: Array.isArray(soup?.allergens) ? allergenCodes(soup.allergens) : undefined })),
         meals: list(day.meals).map(meal => ({
           name: text(meal?.name), price: text(meal?.price),
@@ -463,6 +466,11 @@ function renderEditor() {
   const day = week.days[dayIndex];
   $('day-editor').innerHTML = `
     <h2 class="day-heading">${days[dayIndex]} · ${formatDate(week.start, dayIndex)}</h2>
+    <label class="edit-card day-status" for="day-status">Prevádzka
+      <select id="day-status" data-path="status">${Object.entries(dayStatuses).map(([value, label]) =>
+        `<option value="${value}" ${(day.status || 'open') === value ? 'selected' : ''}>${label}</option>`).join('')}</select>
+    </label>
+    <div ${dayNotice(day) ? 'hidden' : ''}>
     <section class="edit-card"><div class="card-title"><h3>Polievky</h3>${day.soups.length < 2 ? '<button class="secondary" data-action="add-soup">+ Pridať polievku</button>' : ''}</div>
       ${day.soups.map((soup, i) => `<div class="soup-line">${pickerField('soups', 'soups.' + i + '.name', 'Polievka ' + (i + 1), soup.name)}
         ${priceField('soups.' + i + '.price', soup.price)}<button class="icon remove" data-action="remove-soup" data-index="${i}" aria-label="Odobrať polievku ${i + 1}" title="Odobrať polievku">×</button>${allergenButton('soups', i)}</div>`).join('')}
@@ -475,6 +483,7 @@ function renderEditor() {
       ${allergenButton('meals', i)}
     </section>`).join('')}
     ${day.meals.length ? '<button class="add-meal secondary" data-action="add-meal">+ Pridať jedlo</button>' : ''}
+    </div>
   `;
   updateAllergenButtons();
 }
@@ -486,7 +495,12 @@ function readEntryChanges(event) {
   const parent = parts.reduce((target, name) => target[name], week.days[dayIndex]);
   parent[last] = event.target.value;
   markDraft();
-  updateAllergenButtons();
+  if (path === 'status') {
+    renderEditor();
+    $('day-status').focus();
+  } else {
+    updateAllergenButtons();
+  }
 }
 function rememberEntry(event) {
   const path = event.target.dataset.path || '';
@@ -644,6 +658,10 @@ function priceLabel(raw) {
 }
 function renderDay(day, i, start, kitchen = false, archived = true) {
   const heading = kitchen ? 'h2' : 'h3';
+  const header = `<${heading}><span>${days[i]}</span><time datetime="${iso(dateAt(start, i))}">${formatDate(start, i)}</time></${heading}>`;
+  const card = kitchen ? 'kitchen-day' : 'print-day';
+  const notice = dayNotice(day);
+  if (notice) return `<section class="${card}">${header}<p class="print-day-notice">${notice}</p></section>`;
   const renderRows = (items, meals) => items.filter(item => clean(item.name)).map((item, row) => {
     const sides = list(item.sides).map(clean).filter(Boolean);
     let allergens = '';
@@ -656,7 +674,7 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
   }).join('');
   const soups = renderRows(day.soups, false);
   const meals = renderRows(day.meals, true);
-  return `<section class="${kitchen ? 'kitchen-day' : 'print-day'}"><${heading}><span>${days[i]}</span><time datetime="${iso(dateAt(start, i))}">${formatDate(start, i)}</time></${heading}>
+  return `<section class="${card}">${header}
     ${soups ? '<div class="print-group print-soups"><h4>Polievka</h4>' + soups + '</div>' : ''}
     ${meals ? '<div class="print-group print-meals"><h4>Hlavné jedlá</h4>' + meals + '</div>' : ''}
     ${soups || meals ? '' : '<p class="empty-print">Menu zatiaľ nie je vyplnené.</p>'}</section>`;
@@ -686,10 +704,11 @@ function fitPaper() {
 function renderPreview(saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart)) {
   const previewWeek = saved?.data || week;
   const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start, false, Boolean(saved)));
-  const entries = previewWeek.days.flatMap(day => [
+  const entries = previewWeek.days.filter(day => !dayNotice(day)).flatMap(day => [
     ...day.soups.map(item => [item, 'soups']),
     ...day.meals.map(item => [item, 'dishes'])
   ]).filter(([item]) => clean(item.name));
+  const hasContent = entries.length || previewWeek.days.some(dayNotice);
   const reviews = entries.map(([item, kind]) => displayAllergens(item, kind, Boolean(saved)));
   const pending = reviews.some(review => review.pending || review.extra?.length);
   if (!guestMode) $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
@@ -706,13 +725,13 @@ function renderPreview(saved = $('archive').hidden ? null : archiveHistory().fin
     <h2>${esc(settings.title)}</h2>
     <div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
-    ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer${entries.length ? ' paper-footer-qr' : ''}">
+    ${contact.length || order.length || orderInfo || note || hasContent ? `<footer class="paper-footer${hasContent ? ' paper-footer-qr' : ''}">
       ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
         ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
         ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
       ${contact.length ? '<section class="paper-contact"><h3>Prevádzkovateľ a kontakt</h3><p>' + contact.join(' · ') + '</p></section>' : ''}
-      ${entries.length ? '<a class="paper-qr" href="' + guestMenuUrl + '"><canvas aria-hidden="true"></canvas><span>Aktuálne menu</span></a>' : ''}
+      ${hasContent ? '<a class="paper-qr" href="' + guestMenuUrl + '"><canvas aria-hidden="true"></canvas><span>Aktuálne menu</span></a>' : ''}
       ${note ? '<p class="paper-note">' + esc(note) + '</p>' : ''}</footer>` : ''}
     </div>`;
   const qr = $('paper').querySelector('.paper-qr canvas');
@@ -724,7 +743,7 @@ function selectGuestWeek(items, today = new Intl.DateTimeFormat('sv-SE', { timeZ
   if (published) return published;
   const current = monday(today);
   const weeks = items.filter(item => item.data.days.some(day =>
-    [...day.soups, ...day.meals].some(entry => clean(entry.name))
+    dayNotice(day) || [...day.soups, ...day.meals].some(entry => clean(entry.name))
   ));
   return weeks.find(item => item.data.start === current) ||
     weeks.filter(item => item.data.start > current).sort((a, b) => a.data.start.localeCompare(b.data.start))[0] ||
@@ -814,8 +833,34 @@ function showSavedWeek(item) {
   archiveStart = item.data.start;
   openView('archive');
 }
+function checkWeekBeforeSave(currentWeek) {
+  const priceLimit = 25;
+  return currentWeek.days.flatMap((day, index) => {
+    if (dayNotice(day)) return [];
+    const issues = [];
+    for (const [kind, items] of [['meal', day.meals], ['soup', day.soups]]) {
+      const seen = new Set();
+      for (const item of items.filter(item => clean(item.name))) {
+        const name = clean(item.name);
+        const key = fold(name).replace(/\s+/g, ' ');
+        const price = clean(item.price).replace(/\s*€$/, '').replace(',', '.');
+        const label = days[index] + ' – ' + name;
+        if (seen.has(key)) issues.push(label + ' je uvedené viackrát.');
+        seen.add(key);
+        if (!price && kind === 'meal') issues.push(label + ' nemá cenu.');
+        if (price && !/^\d+(\.\d{1,2})?$/.test(price)) {
+          issues.push(label + ' má neplatnú cenu.');
+        } else if (Number(price) >= priceLimit) {
+          issues.push(label + ' má nezvyčajne vysokú cenu (' + priceLabel(item.price) + ').');
+        }
+      }
+    }
+    return issues;
+  });
+}
 function warnings() {
   return week.days.flatMap((day, i) => {
+    if (dayNotice(day)) return [];
     const result = [];
     const meals = day.meals.filter(meal => clean(meal.name));
     if (!day.soups.some(soup => clean(soup.name))) result.push(days[i] + ' – chýba polievka');
@@ -920,14 +965,31 @@ function showSyncError(error) {
   syncLabels(detail + ' Lokálne zmeny sú uložené.');
   notify(detail + ' Lokálne zmeny sú uložené.', true);
 }
+async function dispatchMenuNotification(auth, weekStart) {
+  try {
+    const configuration = await fetch('menu-notifications-config.json', { cache: 'no-store' });
+    if (!configuration.ok || !(await configuration.json()).appId) return true;
+    const response = await fetch('https://api.github.com/repos/Pelinho100/u-mastina-menu/dispatches', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: 'mastina-new-menu', client_payload: { week: weekStart } })
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 async function syncWork(auth, verifyWrite) {
   let mustVerify = verifyWrite;
   let publishedWeek = false;
+  let notificationFailed = false;
   syncLabels('Synchronizujem s GitHubom…');
   for (let attempt = 0; attempt < 5; attempt++) {
     const remote = await remoteData(auth);
     const pending = read(keys.state, initialState).queue;
     if (pending.length || mustVerify) {
+      const previousDates = new Set(remote.data.history.map(item => item.data.start));
+      const publication = pending.filter(op => op.publishWeek).at(-1)?.history[0];
       for (const op of pending) applyOperation(remote.data, op);
       try {
         await request('PUT', auth, {
@@ -939,7 +1001,10 @@ async function syncWork(auth, verifyWrite) {
         throw error;
       }
       mustVerify = false;
-      publishedWeek ||= pending.some(op => op.publishWeek);
+      publishedWeek ||= Boolean(publication);
+      if (publication && !previousDates.has(publication.data.start)) {
+        notificationFailed = !(await dispatchMenuNotification(auth, publication.data.start));
+      }
     }
     const finished = new Set(pending.map(op => op.id));
     const state = read(keys.state, initialState);
@@ -958,7 +1023,8 @@ async function syncWork(auth, verifyWrite) {
     }
     if (!remaining.length) {
       syncLabels('Údaje sú synchronizované s GitHubom.');
-      if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
+      if (notificationFailed) notify('Menu je na webe. Požiadavku na upozornenie sa nepodarilo odoslať.', true);
+      else if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
     }
@@ -1267,11 +1333,79 @@ if (guestMode) {
     button.onclick = () => openView(button.dataset.view);
   });
   $('start').onchange = event => changeWeekDate(event.target.value);
-  $('save').onclick = () => $('save-week-dialog').showModal();
+  const askToPublish = () => $('save-week-dialog').showModal();
+  $('save').onclick = () => {
+    const issues = checkWeekBeforeSave(week);
+    if (!issues.length) return askToPublish();
+    $('save-check-list').replaceChildren(...issues.map(issue => {
+      const item = document.createElement('li');
+      item.textContent = issue;
+      return item;
+    }));
+    $('save-check-dialog').showModal();
+  };
+  $('save-check-continue').onclick = () => {
+    $('save-check-dialog').close();
+    askToPublish();
+  };
   $('save-week-form').onsubmit = event => {
     event.preventDefault();
     $('save-week-dialog').close();
     if (event.submitter) saveWeek(event.submitter.value === 'publish');
+  };
+  $('facebook-export').onclick = async () => {
+    const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
+    const selected = saved?.data || week;
+    const button = $('facebook-export');
+    button.disabled = true;
+    try {
+      const codes = (item, kind) => {
+        const review = displayAllergens(item, kind, Boolean(saved));
+        const values = allergenCodes([...review.codes, ...list(review.extra)]);
+        return values.length ? ' (' + values.join(', ') + ')' : '';
+      };
+      const formatPrice = new Intl.NumberFormat('sk-SK', { style: 'currency', currency: 'EUR' });
+      const first = dateAt(selected.start);
+      const last = dateAt(selected.start, 4);
+      const fullDate = { day: 'numeric', month: 'long', year: 'numeric' };
+      const firstDate = first.getMonth() === last.getMonth() ? first.getDate() + '.' :
+        first.toLocaleDateString('sk-SK', first.getFullYear() === last.getFullYear() ?
+          { day: 'numeric', month: 'long' } : fullDate);
+      await menuFacebook.download({
+        start: selected.start,
+        title: settings.title,
+        restaurant: settings.restaurant,
+        range: firstDate + ' – ' + last.toLocaleDateString('sk-SK', fullDate),
+        hours: settings.hours,
+        phone: settings.orderphone.replace(/^([0-9]{4})([0-9]{3})([0-9]{3})$/, '$1 $2 $3'),
+        orderInfo: settings.orderinfo.replace(/\bbolt(?: food)?\b/gi, 'Bolt Food'),
+        address: /^robotnicka 86$/i.test(settings.address) ? 'Robotnícka 86/62' : settings.address,
+        city: /senica/i.test(settings.address) ? '' : '905 01 Senica',
+        allergens: allergenNames.map((name, index) => (index + 1) + ' ' + name),
+        days: selected.days.map((day, index) => ({
+          name: days[index],
+          date: dateAt(selected.start, index).toLocaleDateString('sk-SK', {day:'numeric', month:'numeric'}),
+          notice: dayNotice(day),
+          soups: dayNotice(day) ? [] : day.soups.filter(item => clean(item.name)).map(item => ({
+            name: clean(item.name) + codes(item, 'soups')
+          })),
+          meals: dayNotice(day) ? [] : day.meals.filter(item => clean(item.name)).map(item => {
+            const sides = item.sides.map(clean).filter(Boolean).join(' · ');
+            const allergens = codes(item, 'dishes');
+            const price = clean(item.price).replace(/\s*€$/, '').replace(',', '.');
+            return {
+              name: clean(item.name) + (sides ? '' : allergens),
+              sides: sides ? sides + allergens : '',
+              price: /^\d+(\.\d{1,2})?$/.test(price) ? formatPrice.format(Number(price)) : clean(item.price)
+            };
+          })
+        }))
+      });
+    } catch {
+      notify('Obrázok na Facebook sa nepodarilo vytvoriť.', true);
+    } finally {
+      button.disabled = false;
+    }
   };
   $('load-last').onclick = () => showSavedWeek(archiveHistory()[0]);
   $('archive-refresh').onclick = refreshArchive;

@@ -11,12 +11,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor týždenného obedového menu U Mastina">
 <title>Týždenné menu | U Mastina</title>
-<link rel="stylesheet" href="tyzdenne-menu.css?v=30">
+<link rel="stylesheet" href="tyzdenne-menu.css?v=37">
 <script defer src="menu-qr.js?v=8"></script>
 <script defer src="menu-pairing.js?v=8"></script>
-<script defer src="menu-print.js?v=29"></script>
+<script defer src="menu-print.js?v=37"></script>
 <script defer src="menu-allergen-catalog.js?v=1"></script>
-<script defer src="tyzdenne-menu.js?v=34"></script>
+<script defer src="menu-facebook.js?v=37"></script>
+<script defer src="tyzdenne-menu.js?v=37"></script>
 </head>
 <body>
 <header class="app-header">
@@ -25,6 +26,7 @@
     <button id="load-last" class="secondary">Načítať posledný</button>
     <a id="kitchen-link" class="button secondary" href="?view=kuchyna">Verzia do kuchyne</a>
     <button id="print" class="secondary">Tlačiť A4 / PDF</button>
+    <button id="facebook-export" type="button" class="secondary">Vytvoriť lístok na Facebook</button>
     <button id="save" class="primary">Uložiť týždeň</button>
   </div>
 </header>
@@ -97,6 +99,14 @@
   <p id="kitchen-status" role="status" hidden></p>
   <div id="kitchen-days"></div>
 </main>
+<dialog id="save-check-dialog" aria-labelledby="save-check-title">
+  <div class="dialog-title"><h2 id="save-check-title">Skontroluj jedálny lístok</h2></div>
+  <ul id="save-check-list"></ul>
+  <div class="settings-actions">
+    <button type="button" class="primary" data-close="save-check-dialog" autofocus>Vrátiť sa k úpravám</button>
+    <button id="save-check-continue" type="button" class="secondary">Uložiť aj tak</button>
+  </div>
+</dialog>
 <dialog id="save-week-dialog" aria-labelledby="save-week-title">
   <div class="dialog-title"><h2 id="save-week-title">Nahrať jedálny lístok na web?</h2><button type="button" class="icon secondary" data-close="save-week-dialog" aria-label="Zrušiť">×</button></div>
   <p>Áno nahradí menu na webe. Nie uloží jedálny lístok iba v tomto zariadení.</p>

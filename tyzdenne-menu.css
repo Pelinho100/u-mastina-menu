@@ -203,3 +203,9 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
 @media print {
   #guest-tools, #guest-install-help, #guest-status { display: none !important; }
 }
+
+.day-status select { width: min(100%, 230px); margin-top: 5px; }
+.print-day-notice { font-weight: 700; font-size: 13px; padding: 5px 8px; background: #eee; }
+.kitchen-day .print-day-notice { font-size: 19px; }
+#save-check-list { max-height: 44vh; overflow: auto; padding-left: 24px; }
+#save-check-list li + li { margin-top: 5px; }
