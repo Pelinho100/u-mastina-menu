@@ -63,6 +63,8 @@ const allergenNames = [
   'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
 ];
 const recipeAllergenHints = [
+  // Znojemská omáčka s pšeničnou múkou a horčicou: https://www.recepto.sk/recept/znojemska-hovadzia-pecienka/
+  [/\bznojemsk\w* (?:[a-z]+ ){0,2}pecienk\w*\b/, [1, 10]],
   // Plnený rezeň so syrom v trojobale: https://www.recepto.sk/recept/kuraci-rezen-cordon-bleu/
   [/\b(?:cordon|gordon)[\s-]+(?:bleu|blue|ble)\b|^(?:cordon|gordon)$/, [1, 3, 7]],
   // Trojobal: https://www.tastelist.sk/recept/kuraci-vyprazany-rezen/FY4BniFgiWloKmmXKc4I
@@ -134,7 +136,7 @@ function displayAllergens(item, kind, archived) {
 function allergenLabel({ codes, pending, extra = [] }) {
   if (pending) {
     const estimate = allergenCodes([...codes, ...extra]);
-    return estimate.length ? 'Odhad: ' + estimate.join(', ') : 'Alergény: neurčené';
+    return estimate.length ? 'Odhad: ' + estimate.join(', ') : 'Doplniť podľa receptúry';
   }
   if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Odhad: ' + extra.join(', ');
   return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
