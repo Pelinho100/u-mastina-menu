@@ -1007,7 +1007,7 @@ function showSyncError(error) {
 async function dispatchMenuNotification(auth, weekStart) {
   try {
     const configuration = await fetch('menu-notifications-config.json', { cache: 'no-store' });
-    if (!configuration.ok || !(await configuration.json()).appId) return true;
+    if (!configuration.ok || !(await configuration.json()).appId) throw new Error('Chýba konfigurácia OneSignal (menu-notifications-config.json).');
     const response = await fetch('https://api.github.com/repos/Pelinho100/u-mastina-menu/dispatches', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + auth, 'Content-Type': 'application/json' },
@@ -1075,7 +1075,7 @@ async function syncWork(auth, verifyWrite) {
       syncLabels(publishedWeek ? 'Zverejnené na GitHube.' : 'Údaje sú synchronizované s GitHubom.');
       if (deletionBlocked) notify('Týždeň je zverejnený na webe. Vymazanie sa nevykonalo.', true);
       else if (notificationFailed) notify('Menu je na webe, ale upozornenie zlyhalo: ' + (window.menuNotificationError || 'Neznáma chyba'), true);
-      else if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
+      else if (publishedWeek) notify('Menu je zverejnené. Požiadavka na upozornenie bola prijatá GitHubom; doručenie over v GitHub Actions a OneSignal.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
     }
