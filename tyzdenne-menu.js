@@ -1044,7 +1044,7 @@ async function syncWork(auth, verifyWrite) {
       }
       mustVerify = false;
       publishedWeek ||= Boolean(publication);
-      if (publication && !previousDates.has(publication.data.start)) {
+      if (publication) {
         notificationFailed = !(await dispatchMenuNotification(auth, publication.data.start));
       }
     }
