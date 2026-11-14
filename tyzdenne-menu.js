@@ -793,9 +793,9 @@ async function refreshGuestMenu() {
   const refresh = $('guest-refresh');
   refresh.disabled = true;
   try {
-    const url = publicMenuData + '?at=' + Date.now();
-    const response = await fetch(url, { cache: 'no-store' });
-    if (!response.ok) throw new Error('Menu unavailable');
+    const url = 'https://api.github.com/repos/Pelinho100/u-mastina-menu/contents/menu-data.json?ref=menu-data&at=' + Date.now();
+    const response = await fetch(url, { cache: 'no-store', headers: { Accept: 'application/vnd.github.raw+json' } });
+    if (!response.ok) throw new Error('Menu unavailable: HTTP ' + response.status);
     const raw = await response.json();
     if (raw.schema !== 1 || !Array.isArray(raw.history)) throw new Error('Invalid menu data');
     const data = emptyData();
