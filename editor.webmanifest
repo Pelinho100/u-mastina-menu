@@ -1,0 +1,23 @@
+{
+  "id": "./tyzdenne-menu.html",
+  "name": "U Mastina – Editor",
+  "short_name": "U Mastina Editor",
+  "lang": "sk",
+  "start_url": "./tyzdenne-menu.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#103c2e",
+  "theme_color": "#103c2e",
+  "icons": [
+    {
+      "src": "mastina-editor-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "mastina-editor-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
