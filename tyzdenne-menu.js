@@ -1013,8 +1013,14 @@ async function dispatchMenuNotification(auth, weekStart) {
       headers: { Authorization: 'Bearer ' + auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({ event_type: 'mastina-new-menu', client_payload: { week: weekStart } })
     });
-    return response.ok;
-  } catch {
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new Error('GitHub dispatch HTTP ' + response.status + ': ' + detail.slice(0, 180));
+    }
+    return true;
+  } catch (error) {
+    console.error('OneSignal notification dispatch failed:', error);
+    window.menuNotificationError = error.message || String(error);
     return false;
   }
 }
@@ -1068,7 +1074,7 @@ async function syncWork(auth, verifyWrite) {
     if (!remaining.length) {
       syncLabels(publishedWeek ? 'Zverejnené na GitHube.' : 'Údaje sú synchronizované s GitHubom.');
       if (deletionBlocked) notify('Týždeň je zverejnený na webe. Vymazanie sa nevykonalo.', true);
-      else if (notificationFailed) notify('Menu je na webe. Požiadavku na upozornenie sa nepodarilo odoslať.', true);
+      else if (notificationFailed) notify('Menu je na webe, ale upozornenie zlyhalo: ' + (window.menuNotificationError || 'Neznáma chyba'), true);
       else if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
