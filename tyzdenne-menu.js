@@ -625,10 +625,10 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
     let allergens = '';
     if (!kitchen) {
       const review = displayAllergens(item, meals ? 'dishes' : 'soups', archived);
-      const label = allergenLabel(review, true);
-      if (label) allergens = '<div class="print-allergens">' + label + '</div>';
+      const codes = allergenCodes([...review.codes, ...list(review.extra)]);
+      if (codes.length) allergens = ' <span class="print-allergens">(' + codes.join(', ') + ')</span>';
     }
-    return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + '</small>' : ''}${allergens}</div>`;
+    return `<div class="print-row"><strong>${meals ? '<span class="meal-number">' + (row + 1) + '.</span> ' : ''}${esc(clean(item.name))}${sides.length ? '' : allergens}</strong><span class="print-price">${priceLabel(item.price)}</span>${sides.length ? '<small>' + sides.map(esc).join(' · ') + allergens + '</small>' : ''}</div>`;
   }).join('');
   const soups = renderRows(day.soups, false);
   const meals = renderRows(day.meals, true);

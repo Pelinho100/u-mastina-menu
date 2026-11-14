@@ -129,25 +129,16 @@ const menuPrint = (() => {
         for (const row of group.querySelectorAll('.print-row')) {
           const size = kitchen ? 29 : 10;
           const price = row.querySelector('.print-price').textContent.trim();
-          const allergens = row.querySelector('.print-allergens')?.textContent;
-          const inlineAllergens = soupBand && !price;
-          const rightText = inlineAllergens ? allergens : price;
-          const rightSize = inlineAllergens ? 8 : size;
-          ctx.font = (inlineAllergens ? '' : 'bold ') + rightSize + 'px Arial';
-          const rightWidth = rightText ? Math.min((right - x) * 0.43, ctx.measureText(rightText).width + 2) : 0;
-          const nameEnd = label(row.querySelector('strong').textContent, x, y, right - x - (rightWidth ? rightWidth + 6 : 0), size, 'Arial', 'bold');
-          const rightEnd = label(rightText, right, y + (inlineAllergens ? 1 : 0), rightWidth, rightSize, 'Arial', inlineAllergens ? '' : 'bold', 'right');
-          const detailStart = Math.max(nameEnd, rightEnd);
+          ctx.font = 'bold ' + size + 'px Arial';
+          const priceWidth = price ? Math.min((right - x) * 0.43, ctx.measureText(price).width + 2) : 0;
+          const nameEnd = label(row.querySelector('strong').textContent, x, y, right - x - (priceWidth ? priceWidth + 6 : 0), size, 'Arial', 'bold');
+          const priceEnd = label(price, right, y, priceWidth, size, 'Arial', 'bold', 'right');
+          const detailStart = Math.max(nameEnd, priceEnd);
           const sides = row.querySelector('small')?.textContent;
           if (kitchen) {
             y = label(sides, x, detailStart + (sides ? 2 : 0), right - x, 23, 'Georgia', 'italic') + 13;
           } else {
-            const codes = inlineAllergens ? '' : allergens;
-            ctx.font = '8px Arial';
-            const codeWidth = codes ? Math.min((right - x) * 0.43, ctx.measureText(codes).width + 2) : 0;
-            const sidesEnd = label(sides, x + 9, detailStart, right - x - 9 - (codeWidth ? codeWidth + 6 : 0), 8.5);
-            const codeEnd = label(codes, right, detailStart, codeWidth, 8, 'Arial', '', 'right');
-            y = Math.max(sidesEnd, codeEnd) + 2;
+            y = label(sides, x, detailStart, right - x, 8.5) + 2;
           }
         }
         if (soupBand) bandEnd = y + 1;
@@ -163,7 +154,16 @@ const menuPrint = (() => {
     let footerHeight = 0;
     if (footer) {
       const legend = footer.querySelector('.allergen-legend')?.textContent;
-      if (legend) y = label(legend, 0, y, width, 7.5) + 5;
+      if (legend) {
+        const top = y;
+        y = label(legend, 6, y + 4, width - 12, 7.5) + 4;
+        const boxHeight = y - top;
+        commands.push(() => {
+          ctx.lineWidth = 0.65;
+          ctx.strokeRect(0, top, width, boxHeight);
+        });
+        y += 5;
+      }
       const order = footer.querySelector('.paper-orders');
       const contact = footer.querySelector('.paper-contact');
       const column = (width - 12) / 2;
