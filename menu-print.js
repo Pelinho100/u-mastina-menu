@@ -166,8 +166,20 @@ const menuPrint = (() => {
       }
       const order = footer.querySelector('.paper-orders');
       const contact = footer.querySelector('.paper-contact');
-      const column = (width - 12) / 2;
-      if (order || contact) rule(y);
+      const qr = footer.querySelector('.paper-qr canvas');
+      const contactRight = qr ? width - 76 : width;
+      const column = (contactRight - 12) / 2;
+      if (order || contact) rule(y, 0, contactRight);
+      let qrEnd = y;
+      if (qr) {
+        const size = 65;
+        const top = y;
+        commands.push(() => {
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(qr, width - size, top, size, size);
+        });
+        qrEnd = label('Aktuálne menu', width - size / 2, y + size, size, 7, 'Arial', '', 'center');
+      }
       const footerBlock = (block, x, align) => {
         if (!block) return y;
         let next = label(block.querySelector('h3').textContent.toLocaleUpperCase('sk'), x, y + 5, column, 8, 'Arial', 'bold', align);
@@ -175,7 +187,7 @@ const menuPrint = (() => {
         if (details) next = label(details, x, next, column, 11, 'Arial', 'bold', align);
         return label(block.querySelector('p')?.textContent, x, next, column, 8.5, 'Arial', '', align);
       };
-      y = Math.max(footerBlock(order, 0, 'left'), footerBlock(contact, width, 'right'));
+      y = Math.max(footerBlock(order, 0, 'left'), footerBlock(contact, contactRight, 'right'), qrEnd);
       const note = footer.querySelector('.paper-note')?.textContent;
       if (note) y = label(note, 0, y + 3, width, 8.5, 'Arial', 'italic');
       footerHeight = y - bodyEnd;
@@ -261,6 +273,7 @@ const menuPrint = (() => {
     const link = document.createElement('a');
     link.href = url;
     link.target = '_blank';
+    if (document.body.classList.contains('guest-mode')) link.download = 'U-Mastina-obedove-menu.pdf';
     link.rel = 'noopener';
     document.body.append(link);
     link.click();

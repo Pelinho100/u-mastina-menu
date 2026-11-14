@@ -19,7 +19,11 @@ const keys = {
 };
 const github = 'https://api.github.com/repos/Pelinho100/u-mastina-menu/contents/menu-data.json';
 const branch = 'menu-data';
-const kitchenMode = new URLSearchParams(location.search).get('view') === 'kuchyna';
+const view = new URLSearchParams(location.search).get('view');
+const kitchenMode = view === 'kuchyna';
+const guestMode = view === 'menu';
+const guestMenuUrl = 'https://pelinho100.github.io/u-mastina-menu/tyzdenne-menu.html?view=menu';
+const publicMenuData = 'https://raw.githubusercontent.com/Pelinho100/u-mastina-menu/menu-data/menu-data.json';
 
 const text = value => typeof value === 'string' || typeof value === 'number' ? String(value) : '';
 const clean = value => text(value).trim();
@@ -300,30 +304,30 @@ function legacyState() {
   const seed = { id: identifier(), entries: clone(data.library), history: clone(data.history) };
   return { data, queue: Object.values(data.library).some(values => values.length) || data.history.length ? [seed] : [] };
 }
-const initialState = read(keys.state, null) || legacyState();
+const initialState = guestMode ? { data: emptyData() } : read(keys.state, null) || legacyState();
 let cache = initialState.data;
-let week = normalizeWeek(read(keys.draft, null) || read(keys.old, null) || cache.history[0]?.data || emptyWeek());
+let week = guestMode ? emptyWeek() : normalizeWeek(read(keys.draft, null) || read(keys.old, null) || cache.history[0]?.data || emptyWeek());
 function normalizeSettings(value) {
   return Object.fromEntries(Object.keys(defaults).filter(key => typeof value?.[key] === 'string')
     .map(key => [key, value[key].slice(0, 150)]));
 }
 let settingsDirty = false;
-let settings = {
+let settings = guestMode ? { ...defaults } : {
   ...defaults,
   ...Object.fromEntries(['orderphone', 'address', 'ico', 'phone', 'footer'].map(key => [key, localStorage.getItem('mastina_' + key) || ''])),
   ...read('umastina-weekly-v6-settings', {}),
   ...cache.settings,
   ...read('umastina-weekly-v7-settings-draft', {})
 };
-settingsDirty = Boolean(read('umastina-weekly-v7-settings-draft', null));
+settingsDirty = !guestMode && Boolean(read('umastina-weekly-v7-settings-draft', null));
 let dayIndex = 0;
 let category = 'dishes';
 let syncJob = null;
-let token = sessionStorage.getItem(keys.token) || '';
+let token = guestMode ? '' : sessionStorage.getItem(keys.token) || '';
 let pickerTarget = null;
 let kitchenSelection = '';
 let kitchenShared = [];
-if (read(keys.draft + '-dirty', false)) {
+if (!guestMode && read(keys.draft + '-dirty', false)) {
   const drafts = read(keys.drafts, {});
   if (!drafts[week.start]) {
     drafts[week.start] = week;
@@ -331,7 +335,7 @@ if (read(keys.draft + '-dirty', false)) {
   }
   localStorage.removeItem(keys.draft + '-dirty');
 }
-const initialDraft = read(keys.drafts, {})[week.start];
+const initialDraft = guestMode ? null : read(keys.drafts, {})[week.start];
 week = normalizeWeek(initialDraft || week);
 let originalWeekStart = initialDraft?.originalWeekStart || week.start;
 let draftDirty = Boolean(initialDraft);
@@ -343,7 +347,7 @@ function writeState(value) {
   localStorage.setItem(keys.state, JSON.stringify(value));
   cache = value.data;
 }
-if (!read(keys.state, null)) writeState(initialState);
+if (!guestMode && !read(keys.state, null)) writeState(initialState);
 function stage(operation) {
   const state = read(keys.state, initialState);
   const entry = { id: identifier(), ...operation };
@@ -659,8 +663,7 @@ function fitPaper() {
   inner.style.minHeight = height / fit + 'px';
   paper.style.transform = 'scale(' + frame.clientWidth / parseFloat(size.width) + ')';
 }
-function renderPreview() {
-  const saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart);
+function renderPreview(saved = $('archive').hidden ? null : archiveHistory().find(item => item.data.start === archiveStart)) {
   const previewWeek = saved?.data || week;
   const cards = previewWeek.days.map((day, i) => renderDay(day, i, previewWeek.start, false, Boolean(saved)));
   const entries = previewWeek.days.flatMap(day => [
@@ -669,7 +672,7 @@ function renderPreview() {
   ]).filter(([item]) => clean(item.name));
   const reviews = entries.map(([item, kind]) => displayAllergens(item, kind, Boolean(saved)));
   const pending = reviews.some(review => review.pending || review.extra?.length);
-  $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
+  if (!guestMode) $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
     clean(settings.dic) && 'DIČ ' + clean(settings.dic), clean(settings.icdph) && 'IČ DPH ' + clean(settings.icdph),
@@ -683,15 +686,61 @@ function renderPreview() {
     <h2>${esc(settings.title)}</h2>
     <div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>
     <div class="paper-days">${cards.join('')}</div>
-    ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer">
+    ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer${entries.length ? ' paper-footer-qr' : ''}">
       ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
         ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
         ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
       ${contact.length ? '<section class="paper-contact"><h3>Prevádzkovateľ a kontakt</h3><p>' + contact.join(' · ') + '</p></section>' : ''}
+      ${entries.length ? '<a class="paper-qr" href="' + guestMenuUrl + '"><canvas aria-hidden="true"></canvas><span>Aktuálne menu</span></a>' : ''}
       ${note ? '<p class="paper-note">' + esc(note) + '</p>' : ''}</footer>` : ''}
     </div>`;
+  const qr = $('paper').querySelector('.paper-qr canvas');
+  if (qr) drawMenuQr(qr, guestMenuUrl);
   fitPaper();
+}
+function selectGuestWeek(items, today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Bratislava' }).format(new Date())) {
+  const current = monday(today);
+  const weeks = items.filter(item => item.data.days.some(day =>
+    [...day.soups, ...day.meals].some(entry => clean(entry.name))
+  ));
+  return weeks.find(item => item.data.start === current) ||
+    weeks.filter(item => item.data.start > current).sort((a, b) => a.data.start.localeCompare(b.data.start))[0] ||
+    weeks.sort((a, b) => b.data.start.localeCompare(a.data.start))[0];
+}
+let guestLoading = false;
+async function refreshGuestMenu() {
+  if (guestLoading) return;
+  guestLoading = true;
+  const status = $('guest-status');
+  const frame = $('paper-frame');
+  try {
+    const response = await fetch(publicMenuData, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Menu unavailable');
+    const raw = await response.json();
+    if (raw.schema !== 1 || !Array.isArray(raw.history)) throw new Error('Invalid menu data');
+    const data = emptyData();
+    addHistory(data, normalizeHistory(raw.history));
+    const selected = selectGuestWeek(data.history);
+    if (!selected) {
+      frame.hidden = true;
+      $('guest-print').disabled = true;
+      status.textContent = 'Obedové menu zatiaľ nie je zverejnené.';
+      status.hidden = false;
+      return;
+    }
+    cache = { ...data, allergenProfiles: normalizeProfiles(raw.allergenProfiles), allergenReviewed: raw.allergenReviewed };
+    settings = { ...defaults, ...normalizeSettings(raw.settings) };
+    frame.hidden = false;
+    renderPreview(selected);
+    $('guest-print').disabled = false;
+    status.hidden = true;
+  } catch {
+    status.textContent = frame.hidden ? 'Menu sa nepodarilo načítať. Skús obnoviť stránku.' : 'Menu sa nepodarilo aktualizovať. Zobrazená je posledná načítaná ponuka.';
+    status.hidden = false;
+  } finally {
+    guestLoading = false;
+  }
 }
 function collectWeek() {
   return {
@@ -962,7 +1011,7 @@ async function refreshKitchen() {
 }
 let activePairing = null;
 const pairingHash = location.hash;
-const approval = menuPairing.fromHash(pairingHash);
+const approval = guestMode ? null : menuPairing.fromHash(pairingHash);
 let approvalPending = Boolean(approval);
 
 function pairingControls() {
@@ -1069,7 +1118,22 @@ async function restoreConnection() {
   if (!$('github-dialog').open) $('github-dialog').showModal();
 }
 
-if (kitchenMode) {
+if (guestMode) {
+  document.title = 'Obedové menu · U Mastina';
+  document.body.classList.add('guest-mode');
+  document.querySelector('.preview-pane').setAttribute('aria-label', 'Obedové menu U Mastina');
+  $('guest-tools').hidden = false;
+  $('guest-status').hidden = false;
+  $('paper-frame').hidden = true;
+  $('guest-print').onclick = () => menuPrint.open([$('paper')]);
+  new ResizeObserver(fitPaper).observe(document.querySelector('.preview-pane'));
+  const refreshVisibleGuestMenu = () => { if (!document.hidden) refreshGuestMenu(); };
+  document.addEventListener('visibilitychange', refreshVisibleGuestMenu);
+  window.addEventListener('pageshow', refreshVisibleGuestMenu);
+  window.addEventListener('online', refreshVisibleGuestMenu);
+  setInterval(refreshVisibleGuestMenu, 60_000);
+  refreshGuestMenu();
+} else if (kitchenMode) {
   document.title = 'Kuchyňa · Týždenné menu';
   document.body.classList.add('kitchen-mode');
   $('kitchen').hidden = false;

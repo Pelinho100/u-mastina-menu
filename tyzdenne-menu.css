@@ -178,3 +178,26 @@ dialog{width:min(530px,calc(100vw - 28px));border:1px solid var(--line);border-r
   line-height: 1.3;
 }
 .allergen-draft{font-size:11px;font-weight:700;margin:0 0 7px}
+
+.paper-footer-qr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 92px; }
+.paper-qr {
+  grid-column: 3;
+  grid-row: 2;
+  color: inherit;
+  font-size: 9px;
+  text-decoration: none;
+  text-align: center;
+  align-self: start;
+}
+.paper-qr canvas { display: block; width: 80px; height: 80px; margin: auto; }
+.guest-mode .app-header, .guest-mode .sidebar, .guest-mode .work-area, .guest-mode .preview-title { display: none; }
+.guest-mode .workspace { display: block; max-width: 832px; min-height: 0; height: auto; margin: auto; }
+.guest-mode .preview-pane { border: 0; }
+#guest-tools { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+#guest-status { margin: 8px 0; font-size: 14px; }
+@media screen and (max-width: 650px) {
+  .guest-mode .preview-pane { padding: 8px 4px 14px; }
+}
+@media print {
+  #guest-tools, #guest-status { display: none !important; }
+}

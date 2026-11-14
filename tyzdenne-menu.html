@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor týždenného obedového menu U Mastina">
 <title>Týždenné menu | U Mastina</title>
-<link rel="stylesheet" href="tyzdenne-menu.css?v=27">
+<link rel="stylesheet" href="tyzdenne-menu.css?v=29">
 <script defer src="menu-qr.js?v=8"></script>
 <script defer src="menu-pairing.js?v=8"></script>
-<script defer src="menu-print.js?v=27"></script>
+<script defer src="menu-print.js?v=29"></script>
 <script defer src="menu-allergen-catalog.js?v=1"></script>
-<script defer src="tyzdenne-menu.js?v=28"></script>
+<script defer src="tyzdenne-menu.js?v=29"></script>
 </head>
 <body>
 <header class="app-header">
@@ -83,6 +83,8 @@
   </main>
   <aside class="preview-pane" aria-label="Náhľad jedálneho lístka">
     <div class="preview-title"><strong>Náhľad pre hostí</strong><span>A4 · na výšku</span></div>
+    <div id="guest-tools" hidden><button id="guest-print" class="secondary" disabled>Stiahnuť menu / PDF</button></div>
+    <p id="guest-status" role="status" hidden>Načítavam obedové menu…</p>
     <div id="paper-frame"><article id="paper" class="paper"></article></div>
   </aside>
 </div>
