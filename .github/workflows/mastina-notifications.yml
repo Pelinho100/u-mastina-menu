@@ -13,13 +13,13 @@ jobs:
     steps:
       - name: Odoslat push cez OneSignal
         env:
-          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+          ONESIGNAL_APP_ID: bdc53520-1dcf-4af7-947e-c20056f31505
           ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
           WEEK: ${{ github.event.client_payload.week }}
         run: |
           set -euo pipefail
           if [ -z "$ONESIGNAL_APP_ID" ] || [ -z "$ONESIGNAL_REST_API_KEY" ]; then
-            echo "::error::Nastav GitHub Secrets ONESIGNAL_APP_ID a ONESIGNAL_REST_API_KEY"
+            echo "::error::Nastav GitHub Secret ONESIGNAL_REST_API_KEY"
             exit 1
           fi
           python3 - <<'PY' > /tmp/mastina-push.json
