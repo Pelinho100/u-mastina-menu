@@ -633,8 +633,8 @@ function renderDay(day, i, start, kitchen = false, archived = true) {
   const soups = renderRows(day.soups, false);
   const meals = renderRows(day.meals, true);
   return `<section class="${kitchen ? 'kitchen-day' : 'print-day'}"><${heading}><span>${days[i]}</span><time datetime="${iso(dateAt(start, i))}">${formatDate(start, i)}</time></${heading}>
-    ${soups ? '<div class="print-group"><h4>Polievky</h4>' + soups + '</div>' : ''}
-    ${meals ? '<div class="print-group"><h4>Hlavné jedlá</h4>' + meals + '</div>' : ''}
+    ${soups ? '<div class="print-group print-soups"><h4>Polievky</h4>' + soups + '</div>' : ''}
+    ${meals ? '<div class="print-group print-meals"><h4>Hlavné jedlá</h4>' + meals + '</div>' : ''}
     ${soups || meals ? '' : '<p class="empty-print">Menu zatiaľ nie je vyplnené.</p>'}</section>`;
 }
 function fitPaper() {
@@ -679,7 +679,6 @@ function renderPreview() {
   const orderInfo = clean(settings.orderinfo);
   const note = clean(settings.footer);
   $('paper').innerHTML = `<div class="paper-inner"><header class="paper-header">
-    <div class="paper-ornament" aria-hidden="true"><span></span></div>
     ${settings.restaurant ? '<div class="restaurant">' + esc(settings.restaurant) + '</div>' : ''}
     <h2>${esc(settings.title)}</h2>
     <div class="paper-range"><span>${range(previewWeek.start)}</span>${clean(settings.hours) ? '<span>' + esc(clean(settings.hours)) + '</span>' : ''}</div></header>

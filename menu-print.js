@@ -67,84 +67,123 @@ const menuPrint = (() => {
       });
       return y + lines.length * size * 1.23;
     }
-    function rule(y) {
+    function rule(y, x = 0, end = width, thickness = 0.65) {
       commands.push(() => {
+        ctx.lineWidth = thickness;
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
+        ctx.moveTo(x, y);
+        ctx.lineTo(end, y);
         ctx.stroke();
       });
     }
     let y = 0;
     if (!kitchen) {
       const header = section.querySelector('.paper-header');
-      label('◇', width / 2, y, width, 11, 'Georgia', '', 'center');
-      y += 18;
-      y = label(header.querySelector('.restaurant')?.textContent, width / 2, y, width, 11, 'Georgia', 'bold', 'center') + 3;
-      y = label(header.querySelector('h2').textContent, width / 2, y, width, 38, 'Georgia', '', 'center') + 3;
-      const marker = header.querySelector('.allergen-draft')?.textContent;
-      if (marker) y = label(marker, width / 2, y, width, 10, 'Arial', 'bold', 'center') + 5;
-      y = label(Array.from(header.querySelectorAll('.paper-range span'), item => item.textContent).join('  ·  '), width / 2, y, width, 10, 'Arial', 'bold', 'center') + 15;
+      rule(y, 0, width, 1.8);
+      y += 9;
+      const restaurant = header.querySelector('.restaurant')?.textContent;
+      if (restaurant) y = label(restaurant.toLocaleUpperCase('sk'), 0, y, width, 9, 'Arial', 'bold') + 3;
+      y = label(header.querySelector('h2').textContent, 0, y, width, 37, 'Georgia') + 4;
+      const [dates, hours] = [...header.querySelectorAll('.paper-range span')].map(item => item.textContent);
+      y = Math.max(
+        label(dates, 0, y, width * 0.65, 10, 'Arial', 'bold'),
+        label(hours, width, y, width * 0.31, 10, 'Arial', 'bold', 'right')
+      ) + 11;
     }
     const days = kitchen ? [section] : section.querySelectorAll('.print-day');
     for (const day of days) {
       const heading = day.querySelector(kitchen ? 'h2' : 'h3');
       const headingSize = kitchen ? 36 : 16;
+      if (!kitchen) {
+        rule(y);
+        y += 2;
+      }
       const headingEnd = label(heading.querySelector('span').textContent, 0, y, width * 0.58, headingSize, 'Georgia', 'bold');
       const dateEnd = label(heading.querySelector('time').textContent, width, y + (kitchen ? 13 : 4), width * 0.4, kitchen ? 18 : 9, 'Arial', 'bold', 'right');
-      y = Math.max(headingEnd, dateEnd) + 4;
-      rule(y);
-      y += kitchen ? 10 : 4;
+      y = Math.max(headingEnd, dateEnd) + (kitchen ? 4 : 2);
+      if (kitchen) {
+        rule(y);
+        y += 10;
+      }
       for (const group of day.querySelectorAll('.print-group')) {
-        y = label(group.querySelector('h4').textContent.toLocaleUpperCase('sk'), 0, y, width, kitchen ? 14 : 8, 'Arial', 'bold') + 3;
-        const rows = [...group.querySelectorAll('.print-row')];
-        const columns = kitchen ? 1 : 2;
-        const gap = 18;
-        const columnWidth = (width - (columns - 1) * gap) / columns;
-        for (let i = 0; i < rows.length; i += columns) {
-          let end = y;
-          for (const [j, row] of rows.slice(i, i + columns).entries()) {
-            const x = j * (columnWidth + gap);
-            const size = kitchen ? 29 : 10.5;
-            const price = row.querySelector('.print-price').textContent.trim();
-            ctx.font = 'bold ' + size + 'px Arial';
-            const priceWidth = price ? ctx.measureText(price).width + 8 : 0;
-            const nameEnd = label(row.querySelector('strong').textContent, x, y, columnWidth - priceWidth, size, 'Arial', 'bold');
-            label(price, x + columnWidth, y, priceWidth, size, 'Arial', 'bold', 'right');
-            const sidesEnd = label(row.querySelector('small')?.textContent, x, nameEnd + 2, columnWidth, kitchen ? 23 : 9, 'Georgia', 'italic');
-            const allergensEnd = label(row.querySelector('.print-allergens')?.textContent, x, sidesEnd, columnWidth, 8.5, 'Arial', 'bold');
-            end = Math.max(end, allergensEnd);
-          }
-          y = end + (kitchen ? 13 : 3);
+        const title = group.querySelector('h4').textContent.toLocaleUpperCase('sk');
+        const soupBand = !kitchen && group.matches('.print-soups');
+        let x = 0;
+        let right = width;
+        let bandEnd;
+        if (soupBand) {
+          const bandStart = y;
+          commands.push(() => {
+            ctx.save();
+            ctx.fillStyle = '#eee';
+            ctx.fillRect(0, bandStart, width, bandEnd - bandStart);
+            ctx.restore();
+          });
+          y += 3;
+          label(title, 6, y + 1, 48, 7.5, 'Arial', 'bold');
+          x = 58;
+          right -= 6;
+        } else if (kitchen) {
+          y = label(title, 0, y, width, 14, 'Arial', 'bold') + 3;
         }
-        y += kitchen ? 8 : 3;
+        for (const row of group.querySelectorAll('.print-row')) {
+          const size = kitchen ? 29 : 10;
+          const price = row.querySelector('.print-price').textContent.trim();
+          const allergens = row.querySelector('.print-allergens')?.textContent;
+          const inlineAllergens = soupBand && !price;
+          const rightText = inlineAllergens ? allergens : price;
+          const rightSize = inlineAllergens ? 8 : size;
+          ctx.font = (inlineAllergens ? '' : 'bold ') + rightSize + 'px Arial';
+          const rightWidth = rightText ? Math.min((right - x) * 0.43, ctx.measureText(rightText).width + 2) : 0;
+          const nameEnd = label(row.querySelector('strong').textContent, x, y, right - x - (rightWidth ? rightWidth + 6 : 0), size, 'Arial', 'bold');
+          const rightEnd = label(rightText, right, y + (inlineAllergens ? 1 : 0), rightWidth, rightSize, 'Arial', inlineAllergens ? '' : 'bold', 'right');
+          const detailStart = Math.max(nameEnd, rightEnd);
+          const sides = row.querySelector('small')?.textContent;
+          if (kitchen) {
+            y = label(sides, x, detailStart + (sides ? 2 : 0), right - x, 23, 'Georgia', 'italic') + 13;
+          } else {
+            const codes = inlineAllergens ? '' : allergens;
+            ctx.font = '8px Arial';
+            const codeWidth = codes ? Math.min((right - x) * 0.43, ctx.measureText(codes).width + 2) : 0;
+            const sidesEnd = label(sides, x + 9, detailStart, right - x - 9 - (codeWidth ? codeWidth + 6 : 0), 8.5);
+            const codeEnd = label(codes, right, detailStart, codeWidth, 8, 'Arial', '', 'right');
+            y = Math.max(sidesEnd, codeEnd) + 2;
+          }
+        }
+        if (soupBand) bandEnd = y + 1;
+        y += kitchen ? 8 : 2;
       }
       if (kitchen && !day.querySelector('.print-row')) {
         y = label(day.querySelector('.empty-print')?.textContent, 0, y, width, 18);
       }
-      y += kitchen ? 0 : 5;
+      if (!kitchen) y += 3;
     }
     const bodyEnd = y;
     const bodyCommands = commands.length;
     let footerHeight = 0;
     if (footer) {
-      rule(y);
-      y += 5;
-      for (const item of footer.querySelectorAll('h3, .order-details, p')) {
-        const isHeading = item.matches('h3');
-        const isOrder = item.matches('.order-details');
-        const content = isOrder ? [...item.children].map(child => child.textContent).join('  ·  ') : item.textContent;
-        y = label(content, width / 2, y, width - 8, isOrder ? 13 : isHeading ? 8.5 : 9.5, 'Arial', isHeading || isOrder ? 'bold' : '', 'center') + 2;
-      }
+      const legend = footer.querySelector('.allergen-legend')?.textContent;
+      if (legend) y = label(legend, 0, y, width, 7.5) + 5;
+      const order = footer.querySelector('.paper-orders');
+      const contact = footer.querySelector('.paper-contact');
+      const column = (width - 12) / 2;
+      if (order || contact) rule(y);
+      const footerBlock = (block, x, align) => {
+        if (!block) return y;
+        let next = label(block.querySelector('h3').textContent.toLocaleUpperCase('sk'), x, y + 5, column, 8, 'Arial', 'bold', align);
+        const details = [...block.querySelectorAll('.order-details strong')].map(item => item.textContent).join('  ·  ');
+        if (details) next = label(details, x, next, column, 11, 'Arial', 'bold', align);
+        return label(block.querySelector('p')?.textContent, x, next, column, 8.5, 'Arial', '', align);
+      };
+      y = Math.max(footerBlock(order, 0, 'left'), footerBlock(contact, width, 'right'));
+      const note = footer.querySelector('.paper-note')?.textContent;
+      if (note) y = label(note, 0, y + 3, width, 8.5, 'Arial', 'italic');
       footerHeight = y - bodyEnd;
     }
     return { commands, bodyCommands, bodyEnd, footerHeight };
   }
 
   function paint(ctx, section, footer, kitchen) {
-    if (!kitchen) {
-      ctx.strokeRect(-14, -14, width + 28, height + 28);
-    }
     const fits = (layout, scale) =>
       (layout.bodyEnd + layout.footerHeight + (footer ? 12 : 0)) * scale <= height;
     let fit = 1;
