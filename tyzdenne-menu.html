@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="sk">
 <head>
+<script>
+  if (new URLSearchParams(location.search).get('view') === 'menu') {
+    document.documentElement.hidden = true;
+    location.replace('obedove-menu.html');
+  }
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor týždenného obedového menu U Mastina">
@@ -10,7 +16,7 @@
 <script defer src="menu-pairing.js?v=8"></script>
 <script defer src="menu-print.js?v=29"></script>
 <script defer src="menu-allergen-catalog.js?v=1"></script>
-<script defer src="tyzdenne-menu.js?v=30"></script>
+<script defer src="tyzdenne-menu.js?v=31"></script>
 </head>
 <body>
 <header class="app-header">
@@ -83,16 +89,6 @@
   </main>
   <aside class="preview-pane" aria-label="Náhľad jedálneho lístka">
     <div class="preview-title"><strong>Náhľad pre hostí</strong><span>A4 · na výšku</span></div>
-    <div id="guest-tools" hidden>
-      <button id="guest-install" type="button" class="primary" aria-controls="guest-install-help" aria-expanded="false">Pridať menu na plochu</button>
-      <button id="guest-print" type="button" class="secondary" disabled>Stiahnuť menu / PDF</button>
-    </div>
-    <div id="guest-install-help" hidden>
-      <p><strong>iPhone (Safari)</strong> · Zdieľať → Pridať na plochu → Pridať</p>
-      <p><strong>Android (Chrome)</strong> · ⋮ → Inštalovať alebo vytvoriť skratku → Pridať</p>
-      <p>Menu si môžeš uložiť aj medzi záložky prehliadača.</p>
-    </div>
-    <p id="guest-status" role="status" hidden>Načítavam obedové menu…</p>
     <div id="paper-frame"><article id="paper" class="paper"></article></div>
   </aside>
 </div>

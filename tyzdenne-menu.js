@@ -21,8 +21,8 @@ const github = 'https://api.github.com/repos/Pelinho100/u-mastina-menu/contents/
 const branch = 'menu-data';
 const view = new URLSearchParams(location.search).get('view');
 const kitchenMode = view === 'kuchyna';
-const guestMode = view === 'menu';
-const guestMenuUrl = 'https://pelinho100.github.io/u-mastina-menu/tyzdenne-menu.html?view=menu';
+const guestMode = location.pathname.endsWith('/obedove-menu.html');
+const guestMenuUrl = 'https://pelinho100.github.io/u-mastina-menu/obedove-menu.html';
 const publicMenuData = 'https://raw.githubusercontent.com/Pelinho100/u-mastina-menu/menu-data/menu-data.json';
 
 const text = value => typeof value === 'string' || typeof value === 'number' ? String(value) : '';
@@ -1011,7 +1011,7 @@ async function refreshKitchen() {
 }
 let activePairing = null;
 const pairingHash = location.hash;
-const approval = guestMode ? null : menuPairing.fromHash(pairingHash);
+const approval = guestMode || view === 'menu' ? null : menuPairing.fromHash(pairingHash);
 let approvalPending = Boolean(approval);
 
 function pairingControls() {
@@ -1119,13 +1119,6 @@ async function restoreConnection() {
 }
 
 function setUpGuestInstall() {
-  for (const [rel, href] of [['manifest', 'menu.webmanifest'], ['apple-touch-icon', 'menu-ikona-192.png']]) {
-    const link = document.createElement('link');
-    link.rel = rel;
-    link.href = href;
-    document.head.append(link);
-  }
-
   const button = $('guest-install');
   const help = $('guest-install-help');
   let installPrompt;
@@ -1199,7 +1192,7 @@ if (guestMode) {
   });
   renderKitchen();
   refreshKitchen();
-} else {
+} else if (view !== 'menu') {
   renderEditor();
   renderPreview();
   renderSettings();

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Aktuálne týždenné obedové menu reštaurácie U Mastina">
+<title>Obedové menu · U Mastina</title>
+<link rel="manifest" href="menu.webmanifest?v=31">
+<link rel="apple-touch-icon" href="menu-ikona-192.png">
+<link rel="stylesheet" href="tyzdenne-menu.css?v=30">
+<script defer src="menu-qr.js?v=8"></script>
+<script defer src="menu-print.js?v=29"></script>
+<script defer src="menu-allergen-catalog.js?v=1"></script>
+<script defer src="tyzdenne-menu.js?v=31"></script>
+</head>
+<body class="guest-mode">
+<main class="workspace">
+  <section class="preview-pane" aria-label="Obedové menu U Mastina">
+    <div id="guest-tools">
+      <button id="guest-install" type="button" class="primary" aria-controls="guest-install-help" aria-expanded="false">Pridať menu na plochu</button>
+      <button id="guest-print" type="button" class="secondary" disabled>Stiahnuť menu / PDF</button>
+    </div>
+    <div id="guest-install-help" hidden>
+      <p><strong>iPhone (Safari)</strong> · Zdieľať → Pridať na plochu → Pridať</p>
+      <p><strong>Android (Chrome)</strong> · ⋮ → Inštalovať alebo vytvoriť skratku → Pridať</p>
+      <p>Menu si môžeš uložiť aj medzi záložky prehliadača.</p>
+    </div>
+    <p id="guest-status" role="status">Načítavam obedové menu…</p>
+    <div id="paper-frame" hidden><article id="paper" class="paper"></article></div>
+  </section>
+</main>
+</body>
+</html>
