@@ -669,8 +669,6 @@ function renderPreview() {
   ]).filter(([item]) => clean(item.name));
   const reviews = entries.map(([item, kind]) => displayAllergens(item, kind, Boolean(saved)));
   const pending = reviews.some(review => review.pending || review.extra?.length);
-  const automatic = reviews.some(review => (review.pending && review.codes.length) || review.extra?.length);
-  const missing = reviews.some(review => !allergenLabel(review, true));
   $('print').textContent = pending ? 'Tlačiť náhľad A4 / PDF' : 'Tlačiť A4 / PDF';
   const contact = [
     settings.owner, settings.address, clean(settings.ico) && 'IČO ' + clean(settings.ico),
@@ -688,8 +686,6 @@ function renderPreview() {
     <div class="paper-days">${cards.join('')}</div>
     ${contact.length || order.length || orderInfo || note || entries.length ? `<footer class="paper-footer">
       ${entries.length ? '<p class="allergen-legend"><b>Alergény:</b> ' + allergenNames.map((name, i) => (i + 1) + ' ' + name).join(' · ') + '</p>' : ''}
-      ${automatic ? '<p class="allergen-legend">* Automaticky podľa názvu. Presné údaje určuje receptúra.</p>' : ''}
-      ${missing ? '<p class="allergen-legend">Pri položkách bez riadka s alergénmi údaje chýbajú.</p>' : ''}
       ${order.length || orderInfo ? `<section class="paper-orders"><h3>Objednávky</h3>
         ${order.length ? '<div class="order-details">' + order.map(item => '<strong>' + item + '</strong>').join('') + '</div>' : ''}
         ${orderInfo ? '<p>' + esc(orderInfo) + '</p>' : ''}</section>` : ''}
