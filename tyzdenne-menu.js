@@ -62,10 +62,17 @@ const allergenNames = [
   'Mlieko vrátane laktózy', 'Škrupinové plody', 'Zeler', 'Horčica', 'Sezam',
   'Oxid siričitý a siričitany', 'Vlčí bôb', 'Mäkkýše'
 ];
-const porkCutletName = /^bravcov\w* rezen$/;
+const recipeAllergenHints = [
+  // Trojobal: https://www.tastelist.sk/recept/kuraci-vyprazany-rezen/FY4BniFgiWloKmmXKc4I
+  [/^bravcov\w* rezen$|\b(?:vyprazan\w* (?:(?:kurac\w*|bravcov\w*|mor\w*|telac\w*) )?|kurac\w* vyprazan\w* )(?:rezen|rezne|syr\w*|filet\w*|file|ryb\w*)\b/, [1, 3]],
+  // Smotanový variant: https://varecha.pravda.sk/recepty/segedinsky-gulas/79697-recept.html
+  [/\bsegedin\w* gulas\b/, [1, 7]],
+  // Kaša s mliekom a maslom: https://dobruchut.aktuality.sk/recept/48543/zemiakova-kasa-s-maslom-a-mliekom/
+  [/\bzemiakov\w* (?:kas\w*|pyre)\b|\beidam\w*\b/, [7]]
+];
 const allergenHints = [
-  [porkCutletName, [1, 3]],
-  [/\b(vyprazan\w*|trojobal\w*|obalovan\w*|ciernohorsk\w* rezen|(?:cordon|gordon) (?:bleu|blue))\b/, [1, 3]],
+  ...recipeAllergenHints,
+  [/\b(trojobal\w*|obalovan\w*|ciernohorsk\w* rezen|(?:cordon|gordon) (?:bleu|blue))\b/, [1, 3]],
   [/\b(muk\w*|struhank\w*|knedl\w*|cestovin\w*|chlieb|chleb\w*|rezanc\w*|pizz\w*|panin\w*)\b/, [1]],
   [/\b(vajc\w*|vajec\w*|majonez\w*)\b/, [3]],
   [/\b(ryb\w*|heik\w*|losos\w*|tuniak\w*|tresk\w*|pstruh\w*)\b/, [4]],
@@ -85,9 +92,9 @@ function allergenCodes(values) {
   return [...new Set(list(values).filter(code => Number.isInteger(code) && code >= 1 && code <= allergenNames.length))]
     .sort((a, b) => a - b);
 }
-function suggestedAllergens(name) {
+function suggestedAllergens(name, hints = allergenHints) {
   const normalized = fold(name);
-  return allergenCodes(allergenHints.flatMap(([pattern, codes]) => pattern.test(normalized) ? codes : []));
+  return allergenCodes(hints.flatMap(([pattern, codes]) => pattern.test(normalized) ? codes : []));
 }
 function normalizeProfiles(profiles) {
   return Object.fromEntries(Object.entries(profiles || {}).filter(([key, codes]) =>
@@ -99,7 +106,8 @@ function allergenComponents(item, kind) {
   return entries.filter(([, name]) => clean(name)).map(([category, name]) => {
     const key = category + ':' + fold(name);
     const confirmed = cache.allergenProfiles?.[key];
-    return { key, name, confirmed, codes: confirmed ?? suggestedAllergens(name) };
+    const suggested = suggestedAllergens(name);
+    return { key, name, confirmed, suggested, codes: confirmed ?? suggested };
   });
 }
 function allergenReview(item, kind) {
@@ -113,10 +121,12 @@ function displayAllergens(item, kind, archived) {
   const review = archived && Array.isArray(item.allergens)
     ? { codes: item.allergens, pending: false }
     : allergenReview(item, kind);
-  if (kind === 'dishes' && porkCutletName.test(fold(item.name))) {
-    const extra = [1, 3].filter(code => !review.codes.includes(code));
-    if (extra.length) return { ...review, extra };
-  }
+  if (archived && item.allergensReviewed) return review;
+  const extra = allergenCodes(allergenComponents(item, kind).flatMap(component =>
+    cache.allergenReviewed?.[component.key] && !archived ? [] : suggestedAllergens(component.name, recipeAllergenHints)
+  ))
+    .filter(code => !review.codes.includes(code));
+  if (extra.length) return { ...review, extra };
   return review;
 }
 function allergenLabel({ codes, pending, extra = [] }) {
@@ -124,7 +134,7 @@ function allergenLabel({ codes, pending, extra = [] }) {
     const estimate = allergenCodes([...codes, ...extra]);
     return estimate.length ? 'Odhad: ' + estimate.join(', ') : 'Alergény: neurčené';
   }
-  if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Odhad: ' + extra.join(', ');
+  if (extra.length) return (codes.length ? 'Obsahuje: ' + codes.join(', ') + ' · ' : '') + 'Skontrolovať: ' + extra.join(', ');
   return codes.length ? 'Obsahuje: ' + codes.join(', ') : 'Alergény: žiadne označené';
 }
 function allergenButton(kind, index) {
@@ -148,7 +158,7 @@ function openAllergens(path) {
     .map(component => [component.key, component])).values()];
   $('allergen-title').textContent = 'Alergény – ' + item.name;
   $('allergen-fields').innerHTML = components.map((component, componentIndex) => {
-    const extraHints = suggestedAllergens(component.name).filter(code => !component.codes.includes(code));
+    const extraHints = component.suggested.filter(code => !component.codes.includes(code));
     return `
     <fieldset><legend>${esc(component.name)}</legend>
       <p class="muted">${component.confirmed !== undefined ? 'Uložené podľa receptúry' : 'Návrh podľa názvu. Skontroluj receptúru a etikety.'}</p>
@@ -165,7 +175,7 @@ function openAllergens(path) {
     const profiles = Object.fromEntries(components.map((component, i) =>
       [component.key, form.getAll('component-' + i).map(Number)]
     ));
-    stage({ allergenProfiles: profiles });
+    stage({ allergenProfiles: profiles, reviewedRecipes: true });
     updateAllergenButtons();
     renderPreview();
     $('allergen-dialog').close();
@@ -181,9 +191,10 @@ function normalizeWeek(raw) {
       const day = raw?.days?.[i];
       if (!day) return emptyDay();
       return {
-        soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price), allergens: Array.isArray(soup?.allergens) ? allergenCodes(soup.allergens) : undefined })),
+        soups: list(day.soups).map(soup => ({ name: text(soup?.name ?? soup), price: text(soup?.price), allergensReviewed: soup?.allergensReviewed === true, allergens: Array.isArray(soup?.allergens) ? allergenCodes(soup.allergens) : undefined })),
         meals: list(day.meals).map(meal => ({
           name: text(meal?.name), price: text(meal?.price),
+          allergensReviewed: meal?.allergensReviewed === true,
           allergens: Array.isArray(meal?.allergens) ? allergenCodes(meal.allergens) : undefined,
           sides: Array.from({ length: 5 }, (_, j) => text(meal?.sides?.[j] ?? meal?.['side' + (j + 1)] ?? (j === 0 ? meal?.side : '')))
         }))
@@ -223,7 +234,14 @@ function addHistory(data, items) {
   });
 }
 function applyOperation(data, op) {
-  if (op.allergenProfiles) data.allergenProfiles = { ...data.allergenProfiles, ...normalizeProfiles(op.allergenProfiles) };
+  if (op.allergenProfiles) {
+    const profiles = normalizeProfiles(op.allergenProfiles);
+    data.allergenProfiles = { ...data.allergenProfiles, ...profiles };
+    data.allergenReviewed = {
+      ...data.allergenReviewed,
+      ...Object.fromEntries(Object.keys(profiles).map(key => [key, op.reviewedRecipes === true || op.allergenReviewed?.[key] === true]))
+    };
+  }
   if (op.settings) data.settings = { ...data.settings, ...normalizeSettings(op.settings) };
   if (op.entries) addEntries(data.library, op.entries);
   if (op.replacedHistoryIds) {
@@ -671,6 +689,7 @@ function saveWeek() {
       for (const item of items) {
         const review = allergenReview(item, kind);
         item.allergens = review.pending ? undefined : review.codes;
+        item.allergensReviewed = !review.pending && !displayAllergens(item, kind, false).extra?.length;
       }
     }
   }
@@ -767,7 +786,11 @@ async function remoteData(auth = '') {
   const data = emptyData();
   addEntries(data.library, raw.library);
   addHistory(data, normalizeHistory(raw.history));
-  if (raw.allergenProfiles) data.allergenProfiles = normalizeProfiles(raw.allergenProfiles);
+  if (raw.allergenProfiles) {
+    data.allergenProfiles = normalizeProfiles(raw.allergenProfiles);
+    data.allergenReviewed = Object.fromEntries(Object.keys(data.allergenProfiles)
+      .filter(key => raw.allergenReviewed?.[key] === true).map(key => [key, true]));
+  }
   if (raw.settings) data.settings = normalizeSettings(raw.settings);
   return { sha: file.sha, data };
 }
@@ -856,7 +879,7 @@ function openView(view) {
   document.querySelector('.work-area').scrollTop = 0;
 }
 function backup() {
-  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, allergenProfiles: cache.allergenProfiles, history: cache.history, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ data: week, library: cache.library, allergenProfiles: cache.allergenProfiles, allergenReviewed: cache.allergenReviewed, history: cache.history, drafts: read(keys.drafts, {}), settings }, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = 'u-mastina-tyzden-zaloha.json';
@@ -873,7 +896,7 @@ async function importBackup(event) {
     const imported = normalizeWeek(incoming.data);
     const localDrafts = read(keys.drafts, {});
     if (localDrafts[imported.start] && !confirm('Nahradiť rozpracované menu pre ' + range(imported.start) + ' touto zálohou?')) return;
-    stage({ entries: incoming.library, allergenProfiles: incoming.allergenProfiles, history: normalizeHistory(incoming.history) });
+    stage({ entries: incoming.library, allergenProfiles: incoming.allergenProfiles, allergenReviewed: incoming.allergenReviewed, history: normalizeHistory(incoming.history) });
     updateDrafts(drafts => {
       for (const draft of Object.values(incoming.drafts || {})) {
         if (!Array.isArray(draft?.days) || draft.days.length !== 5) continue;
