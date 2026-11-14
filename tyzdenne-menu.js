@@ -280,6 +280,11 @@ function applyOperation(data, op) {
     const replaced = new Set(op.replacedHistoryIds);
     data.history = data.history.filter(item => !replaced.has(item.id));
   }
+  if (op.publishWeek && op.history?.length) {
+    const published = op.history[0];
+    data.history = data.history.filter(item => item.data.start !== published.data.start);
+    data.publishedWeekId = published.id;
+  }
   if (op.history) addHistory(data, op.history);
   if (op.edit) {
     const { category, before, after } = op.edit;
@@ -615,7 +620,7 @@ function renderArchive() {
   $('archive-details').innerHTML = selected ? `
     <div class="archive-actions">
       <span class="muted">${selected.saved ? 'Uložené ' + esc(dateLabel(selected.saved)) : ''}</span>
-      <button class="secondary" data-open-week="${esc(archiveStart)}">${read(keys.drafts, {})[archiveStart] ? 'Pokračovať v rozpísanej úprave' : 'Otvoriť v editore'}</button>
+      <button class="secondary" data-open-week="${esc(archiveStart)}">Upraviť jedálny lístok</button>
     </div>
     <div class="archive-days">${selected.data.days.map((day, i) => renderDay(day, i, archiveStart)).join('')}</div>
   ` : '<p class="muted">Po kliknutí na „Uložiť týždeň“ sa tu zobrazí hotové menu.</p>';
@@ -714,7 +719,9 @@ function renderPreview(saved = $('archive').hidden ? null : archiveHistory().fin
   if (qr) drawMenuQr(qr, guestMenuUrl);
   fitPaper();
 }
-function selectGuestWeek(items, today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Bratislava' }).format(new Date())) {
+function selectGuestWeek(items, today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Bratislava' }).format(new Date()), publishedWeekId = '') {
+  const published = items.find(item => item.id === publishedWeekId);
+  if (published) return published;
   const current = monday(today);
   const weeks = items.filter(item => item.data.days.some(day =>
     [...day.soups, ...day.meals].some(entry => clean(entry.name))
@@ -736,7 +743,7 @@ async function refreshGuestMenu() {
     if (raw.schema !== 1 || !Array.isArray(raw.history)) throw new Error('Invalid menu data');
     const data = emptyData();
     addHistory(data, normalizeHistory(raw.history));
-    const selected = selectGuestWeek(data.history);
+    const selected = selectGuestWeek(data.history, undefined, clean(raw.publishedWeekId));
     if (!selected) {
       frame.hidden = true;
       $('guest-print').disabled = true;
@@ -890,6 +897,8 @@ async function remoteData(auth = '') {
       .filter(key => raw.allergenReviewed?.[key] === true).map(key => [key, true]));
   }
   if (raw.settings) data.settings = normalizeSettings(raw.settings);
+  const publishedWeekId = clean(raw.publishedWeekId);
+  if (publishedWeekId) data.publishedWeekId = publishedWeekId;
   return { sha: file.sha, data };
 }
 function encode(data) {
@@ -949,7 +958,7 @@ async function syncWork(auth, verifyWrite) {
     }
     if (!remaining.length) {
       syncLabels('Údaje sú synchronizované s GitHubom.');
-      if (publishedWeek) notify('Menu je zverejnené pre hostí podľa dátumu týždňa.');
+      if (publishedWeek) notify('Nový jedálny lístok je nahratý na web pre hostí.');
       else if (pending.length) notify('Zmeny sú uložené aj na GitHube.');
       return;
     }
@@ -1262,7 +1271,7 @@ if (guestMode) {
   $('save-week-form').onsubmit = event => {
     event.preventDefault();
     $('save-week-dialog').close();
-    saveWeek(event.submitter?.value === 'publish');
+    if (event.submitter) saveWeek(event.submitter.value === 'publish');
   };
   $('load-last').onclick = () => showSavedWeek(archiveHistory()[0]);
   $('archive-refresh').onclick = refreshArchive;
