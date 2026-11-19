@@ -13,7 +13,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const link=(url,title)=>/^https:\/\//.test(url)?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(title)} ↗</a>`:'';
 function save(){try{localStorage.setItem('formularai-v1',JSON.stringify(state))}catch{storage=false}document.querySelector('#notice')?.replaceChildren(document.createTextNode(storage?'Uložené v tomto zariadení.':'Ukladanie je nedostupné. Pred zatvorením si postup vytlačte.'))}
 function card(t){return `<button class="card" data-topic="${t[0]}"><span class="arrow">↗</span><strong>${t[1]}</strong><small>${t[2]}</small></button>`}
-function render(){app.innerHTML= page==='home'?`<div class="eyebrow">Sprievodca životnými situáciami</div><h1>Viete, čo sa stalo.<br>Pomôžeme s tým,<br>čo nasleduje.</h1><p>Opíšte svoju situáciu vlastnými slovami alebo si vyberte konkrétny krok.</p><form class="search" id="search"><input id="query" aria-label="Opíšte svoju situáciu" placeholder="Napríklad umrel mi otec" required><button class="primary">Nájsť postup →</button></form><div id="result"></div><h2>Keď zomrie blízky človek</h2><div class="grid">${topics.map(card).join('')}</div><footer>Prvá verzia · sprievodca úmrtím a katalóg ${catalog.length} záznamov<br>Údaje o postupe sa ukladajú iba v tomto prehliadači.</footer>`:page==='plan'?plan():page==='catalog'?catalogView():detail(page);app.querySelector('h1,h2')?.setAttribute('tabindex','-1');}
+function render(){app.innerHTML= page==='home'?`<div class="eyebrow">Sprievodca životnými situáciami</div><h1>Viete, čo sa stalo.<br>Pomôžeme s tým,<br>čo nasleduje.</h1><p>Opíšte svoju situáciu vlastnými slovami alebo si vyberte konkrétny krok.</p><form class="search" id="search"><input id="query" aria-label="Opíšte svoju situáciu" placeholder="Napríklad umrel mi otec" required><button class="primary">Nájsť postup →</button></form><div id="result"></div><h2>Keď zomrie blízky človek</h2><div class="grid">${topics.map(card).join('')}</div><footer>Prvá verzia · sprievodca úmrtím a katalóg ${catalog.length} záznamov<br>Údaje o postupe sa ukladajú iba v tomto prehliadači.</footer>`:page==='plan'?plan():page==='catalog'?catalogView():page==='transfer'?transferForm():page==='review'?transferReview():detail(page);app.querySelector('h1,h2')?.setAttribute('tabindex','-1');}
 function plan(){const ids=state.place==='abroad'?['first','funeral','certificate','benefit','inheritance','contracts','pension']:topics.map(t=>t[0]);return `<div class="eyebrow">Váš prípad</div><h1>Krok za krokom</h1><p>Je mi ľúto, že vám zomrel blízky človek. Postup si môžete prispôsobiť tomu, čo už máte vybavené.</p><label for="place">Kde došlo k úmrtiu?</label><select id="place"><option value="">Vyberte možnosť</option>${[['home','Doma / mimo nemocnice'],['hospital','V nemocnici alebo zariadení'],['abroad','V zahraničí']].map(([v,t])=>`<option value="${v}" ${state.place===v?'selected':''}>${t}</option>`).join('')}</select><div class="note">${state.place==='home'?'Ak lekár ešte nepotvrdil úmrtie alebo je možná záchrana života, volajte 155 alebo 112.':state.place==='hospital'?'Úmrtie oznamuje zdravotnícke zariadenie. Dohodnite sa s ním na prevzatí dokladov a ďalšom postupe.':state.place==='abroad'?'Najprv kontaktujte slovenský zastupiteľský úrad v štáte úmrtia. Postup závisí od krajiny. V detaile prvého kroku nájdete konzulárnu pomoc.':'Vyberte miesto úmrtia, aby sa zobrazil prvý krok.'}</div><progress max="${ids.length}" value="${ids.filter(x=>state.done.includes(x)).length}"></progress><p class="muted">Hotové ${ids.filter(x=>state.done.includes(x)).length} z ${ids.length}</p>${ids.map(id=>{const t=topics.find(x=>x[0]===id);return `<div class="card step ${state.done.includes(id)?'done':''}"><label><input style="width:auto" type="checkbox" data-done="${id}" ${state.done.includes(id)?'checked':''}> ${t[1]}</label><button class="secondary" data-topic="${id}">Otvoriť krok →</button></div>`}).join('')}<label for="notes">Moje poznámky</label><textarea id="notes" rows="4" style="width:100%;padding:14px;border-radius:12px">${esc(state.notes)}</textarea><p id="notice" role="status">${storage?'Uložené v tomto zariadení.':'Ukladanie je nedostupné.'}</p><div class="toolbar"><button class="secondary" id="print">Vytlačiť postup</button><button class="secondary" id="reset">Vymazať môj postup</button></div>`}
 function detail(id){const t=topics.find(t=>t[0]===id);const body={first:`<label for="place">Kde došlo k úmrtiu?</label><select id="place"><option value="">Vyberte miesto</option value="home" ${state.place==='home'?'selected':''}>Doma</option><option value="hospital" ${state.place==='hospital'?'selected':''}>V nemocnici</option><option value="abroad" ${state.place==='abroad'?'selected':''}>V zahraničí</option></select><div class="note">${state.place==='home'?'Ak lekár ešte nepotvrdil úmrtie, kontaktujte 155 alebo 112. Lekár vykoná prehliadku.':state.place==='hospital'?'Kontaktujte zariadenie. Oznámenie úmrtia zabezpečuje poskytovateľ zdravotnej starostlivosti.':state.place==='abroad'?'Spojte sa so slovenským zastupiteľským úradom v príslušnej krajine. Prevoz a zahraničné doklady riešte podľa jeho pokynov.':'Miesto úmrtia určuje prvé kroky.'}</div>${link(U,'Oficiálny postup pri úmrtí')}${link('https://www.mzv.sk/sluzby/konzularne-sluzby/co-pre-vas-mozeme-urobit','Konzulárna pomoc v zahraničí')}`,
 funeral:`<p>Po lekárskom potvrdení úmrtia kontaktujte vybranú pohrebnú službu. Dohodnite prevoz, spôsob pochovania a termín. Vyžiadajte si rozpis ceny a potvrdenie o zabezpečení pohrebu.</p><p>So službou si overte, ktoré doklady prevezme a ktoré úkony vybaví na základe splnomocnenia. Odložte si doklady na žiadosť o príspevok.</p>${link(U,'Oficiálny postup')}`,
@@ -31,12 +31,47 @@ function wantsVehicleTransfer(input) {
   const transfer = words.some(word => /^(prepis|prepisat|prevod|previest|kup|preda|darov|zded|dedic|zmen)/.test(word));
   return vehicle && transfer;
 }
+// The draft stays in memory. No personal data is written to shared origin storage.
+const vehicleDraft = { reason: 'Kúpa', plate: '', currentHolder: '', nextHolder: '' };
+const vehicleFields = [
+  ['plate', 'Evidenčné číslo vozidla'],
+  ['currentHolder', 'Doterajší držiteľ – meno alebo názov'],
+  ['nextHolder', 'Nový držiteľ – meno alebo názov']
+];
+function transferForm() {
+  const reasons = ['Kúpa', 'Predaj', 'Darovanie'];
+  return `<button class="secondary" data-page="catalog">← K výsledkom</button>
+    <h1>Pripraviť prepis auta</h1><p>Vytvorte si pracovný návrh. Údaje zostanú v tejto karte do jej zatvorenia alebo obnovenia. Podpis a odoslanie úradu sú zatiaľ vo vývoji.</p>
+    <form id="transfer-form" autocomplete="off"><label for="reason">Dôvod prepisu</label>
+    <select name="reason" id="reason">${reasons.map(reason => `<option ${reason === vehicleDraft.reason ? 'selected' : ''}>${reason}</option>`).join('')}</select>
+    ${vehicleFields.map(([key, title]) => `<label for="${key}">${title}</label><input id="${key}" name="${key}" maxlength="120" pattern=".*[^ ].*" required value="${esc(vehicleDraft[key])}">`).join('')}
+    <div class="toolbar"><button class="primary">Skontrolovať údaje →</button></div></form>`;
+}
+function transferReview() {
+  return `<h1>Kontrola návrhu prepisu</h1><div class="note">Pracovný návrh · nepodpísaný · neodoslaný</div>
+    <dl>${[['reason','Dôvod prepisu'], ...vehicleFields].map(([key,title]) => `<dt>${title}</dt><dd style="margin:4px 0 18px;overflow-wrap:anywhere"><strong>${esc(vehicleDraft[key])}</strong></dd>`).join('')}</dl>
+    <p>Pre úradné podanie ešte treba doplniť údaje a prílohy podľa podmienok služby, zabezpečiť kvalifikovaný elektronický podpis a doručenie do evidencie vozidiel.</p>
+    <div class="toolbar"><button class="secondary" data-page="transfer">Upraviť údaje</button><button class="primary" id="print">Vytlačiť pracovný návrh</button></div>`;
+}
+app.addEventListener('input', event => {
+  if (event.target.form?.id === 'transfer-form' && Object.hasOwn(vehicleDraft, event.target.name)) {
+    vehicleDraft[event.target.name] = event.target.value;
+  }
+});
+app.addEventListener('submit', event => {
+  if (event.target.id !== 'transfer-form') return;
+  event.preventDefault();
+  for (const [key, value] of new FormData(event.target)) vehicleDraft[key] = value.trim();
+  page = 'review';
+  render();
+  scrollTo(0, 0);
+});
 function vehicleChoices() {
   const base = 'https://www.slovensko.sk/sk/zivotne-situacie/zivotna-situacia/';
   return `<section class="card step"><h2>Prepis auta</h2><p>Z akého dôvodu prepisujete vozidlo?</p>
     <h3>Kúpa, predaj alebo darovanie</h3>
     ${link(base + '_ziadost-o-prevod-drzby-osobne', 'Osobný prepis na dopravnom inšpektoráte')}
-    ${link(base + '_ziadost-o-prevod-drzby-vozidla', 'Elektronický prepis cez Slovensko.sk')}
+    <button class="primary" data-page="transfer">Pripraviť prepis vo FormulárAI →</button>
     <h3>Dedičstvo</h3><button class="secondary" data-topic="car">Prepis zdedeného auta →</button></section>`;
 }
 function catalogResults(){if(wantsVehicleTransfer(filter)) return vehicleChoices();let list=catalog.filter(x=>norm(x.title+' '+x.institution+' '+x.situations).includes(norm(filter)));return `<p class="muted">${list.length} výsledkov</p>${list.map(x=>`<article class="card step"><small>${esc(x.institution)}</small><h2 style="font-size:19px">${esc(x.title)}</h2><p>${esc(x.instructions)}</p><p class="muted">Podpis · ${esc(x.signature)}<br>Lehota · ${esc(x.deadline)}</p>${link(x.form,'Otvoriť tlačivo')}${link(x.source,'Pokyny poskytovateľa')}</article>`).join('')}`}
