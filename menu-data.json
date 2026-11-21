@@ -78,8 +78,8 @@
   },
   "history": [
     {
-      "id": "bcf035bc-e0f2-4005-9358-96c42cf5a39f",
-      "saved": "2026-11-21T13:48:50.928Z",
+      "id": "1231a058-b89d-48e9-93ab-0b978e144310",
+      "saved": "2026-11-21T14:04:33.842Z",
       "data": {
         "start": "2026-11-23",
         "days": [
@@ -232,7 +232,7 @@
                 "allergenVersion": 20,
                 "sides": [
                   "Zemiaky",
-                  "Šalát",
+                  "Tatarská omáčka",
                   "",
                   "",
                   ""
@@ -246,8 +246,11 @@
               {
                 "name": "Kurací vývar",
                 "price": "",
-                "allergensReviewed": false,
-                "allergenVersion": 20
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  9
+                ]
               }
             ],
             "meals": [
@@ -298,8 +301,11 @@
               {
                 "name": "Kurací vývar",
                 "price": "",
-                "allergensReviewed": false,
-                "allergenVersion": 20
+                "allergensReviewed": true,
+                "allergenVersion": 20,
+                "allergens": [
+                  9
+                ]
               }
             ],
             "meals": [
@@ -690,5 +696,5 @@
     "phone": "0948505928",
     "footer": ""
   },
-  "publishedWeekId": "bcf035bc-e0f2-4005-9358-96c42cf5a39f"
+  "publishedWeekId": "1231a058-b89d-48e9-93ab-0b978e144310"
 }
