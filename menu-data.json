@@ -79,8 +79,8 @@
   },
   "history": [
     {
-      "id": "1231a058-b89d-48e9-93ab-0b978e144310",
-      "saved": "2026-11-21T14:04:33.842Z",
+      "id": "297b2a49-ea5b-4a00-814d-553d92bcc852",
+      "saved": "2026-11-22T16:01:48.418Z",
       "data": {
         "start": "2026-11-23",
         "days": [
@@ -311,7 +311,7 @@
             ],
             "meals": [
               {
-                "name": "Grilované kuracie stehná",
+                "name": "Grilované kurča",
                 "price": "6",
                 "allergensReviewed": false,
                 "allergenVersion": 20,
@@ -697,5 +697,5 @@
     "phone": "0948505928",
     "footer": ""
   },
-  "publishedWeekId": "1231a058-b89d-48e9-93ab-0b978e144310"
+  "publishedWeekId": "297b2a49-ea5b-4a00-814d-553d92bcc852"
 }
